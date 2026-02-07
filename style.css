@@ -311,6 +311,17 @@ body {
     color: #721c24;
 }
 
+/* Section Headers */
+.section-header td {
+    font-size: 0.9rem;
+    padding: var(--spacing-md) !important;
+    border: none !important;
+}
+
+[data-theme="dark"] .section-header td {
+    background-color: #2d3748 !important;
+}
+
 /* Buttons */
 .btn {
     padding: var(--spacing-sm) var(--spacing-md);

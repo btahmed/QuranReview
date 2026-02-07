@@ -309,61 +309,85 @@ const QuranReview = {
         
         const todayData = this.getTodayMemorizationData();
         
-        tableBody.innerHTML = todayData.map(item => `
+        // Render sections separately to avoid duplication
+        let html = '';
+        
+        // Previously memorized section
+        if (todayData.previouslyMemorized.length > 0) {
+            html += `
+                <tr class="section-header">
+                    <td colspan="5" style="background: var(--accent-green); color: white; text-align: center; font-weight: bold;">
+                        📚 محفوظ سابقًا (للتثبيت)
+                    </td>
+                </tr>
+            `;
+            html += todayData.previouslyMemorized.map(item => this.createTableRow(item)).join('');
+        }
+        
+        // Today's review section
+        if (todayData.todayReview.length > 0) {
+            html += `
+                <tr class="section-header">
+                    <td colspan="5" style="background: var(--accent-gold); color: white; text-align: center; font-weight: bold;">
+                        📋 مراجعة اليوم
+                    </td>
+                </tr>
+            `;
+            html += todayData.todayReview.map(item => this.createTableRow(item)).join('');
+        }
+        
+        // New memorization section
+        if (todayData.newMemorization.length > 0) {
+            html += `
+                <tr class="section-header">
+                    <td colspan="5" style="background: var(--accent-red); color: white; text-align: center; font-weight: bold;">
+                        ✨ حفظ جديد
+                    </td>
+                </tr>
+            `;
+            html += todayData.newMemorization.map(item => this.createTableRow(item)).join('');
+        }
+        
+        // No data message
+        if (todayData.previouslyMemorized.length === 0 && 
+            todayData.todayReview.length === 0 && 
+            todayData.newMemorization.length === 0) {
+            html += `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        لا توجد عناصر للحفظ اليوم. أضف حفظًا جديدًا للبدء!
+                    </td>
+                </tr>
+            `;
+        }
+        
+        tableBody.innerHTML = html;
+    },
+    
+    createTableRow(item) {
+        return `
             <tr>
                 <td class="arabic-text">${item.surahName}</td>
                 <td>${item.fromAyah} - ${item.toAyah}</td>
                 <td>${this.getStatusBadge(item.status)}</td>
-                <td>${item.lastReviewed || 'لم يراجع بعد'}</td>
+                <td>${item.lastReviewed ? new Date(item.lastReviewed).toLocaleDateString('ar-SA') : 'لم يراجع بعد'}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="QuranReview.markAsReviewed(${item.id})">
+                    <button class="btn btn-sm btn-primary" onclick="QuranReview.markAsReviewed(${item.id})" title="تسجيل المراجعة">
                         ✓ مراجعة
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="QuranReview.deleteItem(${item.id})">
+                    <button class="btn btn-sm btn-secondary" onclick="QuranReview.openTarteel(${item.surahId}, ${item.fromAyah}, ${item.toAyah})" title="فتح في تطبيق ترتيل">
+                        🎧 ترتيل
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="QuranReview.deleteItem(${item.id})" title="حذف العنصر">
                         حذف
                     </button>
                 </td>
             </tr>
-        `).join('');
+        `;
     },
     
-    getTodayMemorizationData() {
-        const today = this.state.todayDate;
         
-        // Previously memorized (for revision)
-        const previouslyMemorized = this.state.memorizationData.filter(item => 
-            item.status === 'mastered' || item.status === 'weak'
-        );
         
-        // Today's review (items that need review today)
-        const todayReview = this.state.memorizationData.filter(item => 
-            this.shouldReviewToday(item)
-        );
-        
-        // New memorization
-        const newMemorization = this.state.memorizationData.filter(item => 
-            item.status === 'new' && item.dateAdded === today
-        );
-        
-        return [...previouslyMemorized, ...todayReview, ...newMemorization];
-    },
-    
-    shouldReviewToday(item) {
-        if (!item.lastReviewed) return true;
-        
-        const lastReview = new Date(item.lastReviewed);
-        const today = new Date();
-        const daysSinceReview = Math.floor((today - lastReview) / (1000 * 60 * 60 * 24));
-        
-        // Review schedule based on status
-        switch (item.status) {
-            case 'mastered': return daysSinceReview >= 7;  // Weekly
-            case 'weak': return daysSinceReview >= 3;      // Every 3 days
-            case 'new': return daysSinceReview >= 1;       // Daily
-            default: return false;
-        }
-    },
-    
     getStatusBadge(status) {
         const badges = {
             mastered: '<span class="status-badge status-mastered">✓ متقن</span>',
@@ -416,7 +440,7 @@ const QuranReview = {
         this.renderMemorizationPage();
         
         // Reset form
-        addForm.reset();
+        document.getElementById('add-memorization-form').reset();
         
         this.showNotification('تمت إضافة الحفظ الجديد', 'success');
     },
@@ -604,6 +628,195 @@ const QuranReview = {
         window.addEventListener('beforeunload', () => {
             this.saveData();
         });
+    },
+    
+    // ===================================
+    // DATA MANAGEMENT FUNCTIONS
+    // ===================================
+    
+    exportData() {
+        try {
+            const data = {
+                version: this.config.version,
+                exportDate: new Date().toISOString(),
+                settings: this.state.settings,
+                memorizationData: this.state.memorizationData
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `quranreview-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showNotification('تم تصدير البيانات بنجاح', 'success');
+        } catch (error) {
+            console.error('❌ Error exporting data:', error);
+            this.showNotification('خطأ في تصدير البيانات', 'error');
+        }
+    },
+    
+    importData() {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        // Validate data structure
+                        if (!data.memorizationData || !Array.isArray(data.memorizationData)) {
+                            throw new Error('Invalid data structure');
+                        }
+                        
+                        // Backup current data
+                        const backup = { ...this.state };
+                        
+                        // Import new data
+                        this.state.memorizationData = data.memorizationData || [];
+                        this.state.settings = { ...this.config.defaultSettings, ...data.settings };
+                        
+                        // Save imported data
+                        this.saveData();
+                        
+                        // Refresh UI
+                        this.renderPage(this.state.currentPage);
+                        
+                        this.showNotification('تم استيراد البيانات بنجاح', 'success');
+                    } catch (error) {
+                        console.error('❌ Error parsing imported data:', error);
+                        this.showNotification('ملف غير صالح. يرجى التحقق من البيانات', 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        } catch (error) {
+            console.error('❌ Error importing data:', error);
+            this.showNotification('خطأ في استيراد البيانات', 'error');
+        }
+    },
+    
+    clearData() {
+        if (!confirm('هل أنت متأكد من مسح جميع البيانات؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
+        
+        try {
+            // Clear LocalStorage
+            localStorage.removeItem(this.config.storageKey);
+            localStorage.removeItem(this.config.themeKey);
+            
+            // Reset to defaults
+            this.state.memorizationData = this.getDefaultMemorizationData();
+            this.state.settings = { ...this.config.defaultSettings };
+            
+            // Refresh UI
+            this.renderPage(this.state.currentPage);
+            
+            this.showNotification('تم مسح جميع البيانات', 'info');
+        } catch (error) {
+            console.error('❌ Error clearing data:', error);
+            this.showNotification('خطأ في مسح البيانات', 'error');
+        }
+    },
+    
+    // ===================================
+    // TARTEEL INTEGRATION
+    // ===================================
+    
+    openTarteel(surahId, fromAyah, toAyah) {
+        try {
+            // Official Tarteel smart deep link
+            const url = 'https://tarteel.go.link/?adj_t=1d1pgcav&adj_engagement_type=fallback_click';
+            window.open(url, '_blank', 'noopener,noreferrer');
+            
+            console.log(`🎧 Opening Tarteel for Surah ${surahId}, Ayahs ${fromAyah}-${toAyah}`);
+        } catch (error) {
+            console.error('❌ Error opening Tarteel:', error);
+            this.showNotification('خطأ في فتح تطبيق ترتيل', 'error');
+        }
+    },
+    
+    // ===================================
+    // IMPROVED SPACED REPETITION
+    // ===================================
+    
+    shouldReviewToday(item) {
+        if (!item.lastReviewed) return true;
+        
+        const lastReview = new Date(item.lastReviewed);
+        const today = new Date();
+        const daysSinceReview = Math.floor((today - lastReview) / (1000 * 60 * 60 * 24));
+        
+        // Enhanced spaced repetition schedule
+        const reviewCount = item.reviewCount || 0;
+        let requiredDays;
+        
+        if (reviewCount === 0) {
+            requiredDays = 1;  // First review: next day
+        } else if (reviewCount === 1) {
+            requiredDays = 2;  // Second review: after 2 days
+        } else if (reviewCount === 2) {
+            requiredDays = 4;  // Third review: after 4 days
+        } else if (reviewCount === 3) {
+            requiredDays = 7;  // Fourth review: after 1 week
+        } else if (reviewCount === 4) {
+            requiredDays = 14; // Fifth review: after 2 weeks
+        } else if (reviewCount >= 5 && reviewCount <= 7) {
+            requiredDays = 21; // Reviews 6-8: after 3 weeks
+        } else if (reviewCount >= 8 && reviewCount <= 12) {
+            requiredDays = 30; // Reviews 9-13: after 1 month
+        } else {
+            requiredDays = 45; // Reviews 14+: after 1.5 months
+        }
+        
+        // Weak items need more frequent review
+        if (item.status === 'weak') {
+            requiredDays = Math.max(1, Math.floor(requiredDays * 0.5));
+        }
+        
+        return daysSinceReview >= requiredDays;
+    },
+    
+    // ===================================
+    // IMPROVED MEMORIZATION DATA ORGANIZATION
+    // ===================================
+    
+    getTodayMemorizationData() {
+        const today = this.state.todayDate;
+        
+        // Previously memorized (mastered items for revision)
+        const previouslyMemorized = this.state.memorizationData.filter(item => 
+            item.status === 'mastered' && !this.shouldReviewToday(item)
+        );
+        
+        // Today's review (items that need review today)
+        const todayReview = this.state.memorizationData.filter(item => 
+            this.shouldReviewToday(item)
+        );
+        
+        // New memorization (items added today)
+        const newMemorization = this.state.memorizationData.filter(item => 
+            item.status === 'new' && item.dateAdded === today
+        );
+        
+        return {
+            previouslyMemorized,
+            todayReview,
+            newMemorization
+        };
     }
 };
 
