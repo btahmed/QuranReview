@@ -122,40 +122,45 @@ const QuranAudio = {
 
     // Reciters available
     reciters: {
+        'alafasy': {
+            name: 'مشاري بن راشد العفاسي',
+            baseUrl: 'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy'
+        },
         'abdul_basit': {
             name: 'عبد الباسط عبد الصمد',
-            baseUrl: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasy'
+            baseUrl: 'https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasit'
         },
         'sudais': {
             name: 'عبد الرحمن السديس',
-            baseUrl: 'https://download.quranicaudio.com/quran/abdulrahman_al_sudais'
+            baseUrl: 'https://cdn.islamic.network/quran/audio-surah/128/ar.sudais'
         },
         'minshawi': {
             name: 'محمد صديق المنشاوي',
-            baseUrl: 'https://download.quranicaudio.com/quran/mohammad_siddiq_al_minshawi'
+            baseUrl: 'https://cdn.islamic.network/quran/audio-surah/128/ar.minshawi_mujawwad'
         },
         'husary': {
             name: 'محمود خليل الحصري',
-            baseUrl: 'https://download.quranicaudio.com/quran/mahmoud_khalil_al_husary'
+            baseUrl: 'https://cdn.islamic.network/quran/audio-surah/128/ar.husary'
         }
     },
 
     // Current reciter
-    currentReciter: 'abdul_basit',
+    currentReciter: 'alafasy',
 
     // Get audio URL for a surah
     getAudioUrl: function(surahNumber, reciter = this.currentReciter) {
         const fileName = surahNumber.toString().padStart(3, '0');
         
-        // Use reliable CDN for GitHub Pages
+        // Use Islamic Network CDN (official AlQuran.cloud API)
         const cdnUrls = {
-            'abdul_basit': `https://everyayah.com/data/Abdul_Basit_Mujawwad_128kbps/${fileName}.mp3`,
-            'sudais': `https://everyayah.com/data/AbdulRahman_Al-Sudais_128kbps/${fileName}.mp3`,
-            'minshawi': `https://everyayah.com/data/Mohammad_Siddiq_Al-Minshawi_128kbps/${fileName}.mp3`,
-            'husary': `https://everyayah.com/data/Mahmoud_Khalil_Al-Husary_128kbps/${fileName}.mp3`
+            'alafasy': `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahNumber}.mp3`,
+            'abdul_basit': `https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasit/${surahNumber}.mp3`,
+            'sudais': `https://cdn.islamic.network/quran/audio-surah/128/ar.sudais/${surahNumber}.mp3`,
+            'minshawi': `https://cdn.islamic.network/quran/audio-surah/128/ar.minshawi_mujawwad/${surahNumber}.mp3`,
+            'husary': `https://cdn.islamic.network/quran/audio-surah/128/ar.husary/${surahNumber}.mp3`
         };
         
-        return cdnUrls[reciter] || cdnUrls['abdul_basit'];
+        return cdnUrls[reciter] || cdnUrls['alafasy'];
     },
 
     // Get surah name
