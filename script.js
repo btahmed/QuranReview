@@ -231,7 +231,7 @@ const QuranReview = {
             theme: 'light',
             notifications: true,
             // Ward Player Settings
-            ayahDelay: 2.0, // seconds between ayahs
+            ayahDelay: 0, // seconds between ayahs (default: instant)
             autoPlayNext: true
         },
         
