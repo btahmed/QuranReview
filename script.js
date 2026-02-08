@@ -150,8 +150,10 @@ const AudioManager = {
                     return;
                 }
 
-                // Add delay before next ayah if configured
-                const delay = (QuranReview.state.settings.ayahDelay || 2.0) * 1000;
+                // Get REAL-TIME delay from settings (not cached)
+                const currentDelay = parseFloat(QuranReview.state.settings.ayahDelay) || 2.0;
+                const delay = currentDelay * 1000; // Convert to milliseconds
+                console.log(`🔍 DEBUG: currentDelay = ${currentDelay}s, delay = ${delay}ms`);
 
                 if (QuranReview.state.settings.autoPlayNext && (this.mode === "wird" || this.mode === "surah")) {
                     console.log(`🔄 Auto-playing next ayah after ${delay}ms delay`);
