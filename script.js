@@ -1959,19 +1959,38 @@ const QuranReview = {
         const wardImage = document.getElementById('ward-image');
         const wardText = document.getElementById('ward-ayah-text');
         
-        if (!window.QuranAudio) return;
-        
         const surah = this.config.surahs.find(s => s.id === surahId);
         if (!surah) return;
         
-        // Update image
+        console.log(`🖼️ Updating ayah display: ${surah.name} - ${ayahNumber}`);
+        
+        // Update image - use fallback if QuranAudio not available
         if (wardImage) {
-            const highRes = this.state.imageQuality === 'high';
-            const imageUrl = QuranAudio.getAyahImageUrl(surahId, ayahNumber, highRes);
+            let imageUrl = '';
+            
+            // Try to get image from QuranAudio if available
+            if (window.QuranAudio) {
+                try {
+                    const highRes = this.state.imageQuality === 'high';
+                    imageUrl = QuranAudio.getAyahImageUrl(surahId, ayahNumber, highRes);
+                    console.log('🖼️ Using QuranAudio image URL:', imageUrl);
+                } catch (error) {
+                    console.warn('⚠️ QuranAudio image failed, using fallback:', error);
+                    imageUrl = '';
+                }
+            }
+            
+            // Fallback: use placeholder or generate simple text image
+            if (!imageUrl) {
+                // Create a simple text-based image using canvas
+                imageUrl = this.generateAyahTextImage(surah.name, ayahNumber);
+                console.log('🖼️ Using fallback image URL:', imageUrl);
+            }
             
             wardImage.src = imageUrl;
             wardImage.style.display = 'block';
             wardImage.onerror = () => {
+                console.warn('⚠️ Image failed to load, showing text fallback');
                 wardImage.style.display = 'none';
                 if (wardText) {
                     wardText.style.display = 'block';
@@ -1984,6 +2003,40 @@ const QuranReview = {
             wardText.textContent = `${surah.name} - الآية ${ayahNumber}`;
             wardText.style.display = wardImage && wardImage.style.display !== 'none' ? 'none' : 'block';
         }
+        
+        console.log('✅ Ayah display updated successfully');
+    },
+    
+    generateAyahTextImage(surahName, ayahNumber) {
+        // Create a simple data URL with text
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Border
+        ctx.strokeStyle = '#2d5016';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+        
+        // Text
+        ctx.fillStyle = '#2d5016';
+        ctx.font = 'bold 24px Amiri, Noto Naskh Arabic, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const text = `${surahName}\nالآية ${ayahNumber}`;
+        const lines = text.split('\n');
+        
+        lines.forEach((line, index) => {
+            ctx.fillText(line, canvas.width / 2, canvas.height / 2 + (index - lines.length / 2 + 0.5) * 30);
+        });
+        
+        return canvas.toDataURL('image/png');
     },
     
     initAudioPlayer() {
