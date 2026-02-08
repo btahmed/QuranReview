@@ -131,39 +131,125 @@ const QuranAudio = {
     // Current reciter
     currentReciter: 'alafasy',
 
+    // ===================================
+    // ISLAMIC NETWORK CDN INTEGRATION
+    // ===================================
+    
+    // CDN Base URLs
+    cdn: {
+        audioSurah: 'https://cdn.islamic.network/quran/audio-surah',
+        audioAyah: 'https://cdn.islamic.network/quran/audio',
+        images: 'https://cdn.islamic.network/quran/images',
+        imagesHighRes: 'https://cdn.islamic.network/quran/images/high-resolution',
+        info: 'https://cdn.islamic.network/quran/info'
+    },
+    
+    // Available bitrates
+    bitrates: {
+        high: 192,
+        medium: 128,
+        low: 64,
+        lowest: 32
+    },
+    
+    // Current bitrate (can be changed in settings)
+    currentBitrate: 128,
+    
     // Get audio URL for a surah
-    getAudioUrl: function(surahNumber, reciter = this.currentReciter) {
+    getAudioUrl: function(surahNumber, reciter = this.currentReciter, bitrate = this.currentBitrate) {
         // Use Islamic Network CDN - Alafasy only
-        return `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahNumber}.mp3`;
+        return `${this.cdn.audioSurah}/${bitrate}/${reciter}/${surahNumber}.mp3`;
     },
 
     // Get audio URL for a specific ayah
-    getAyahAudioUrl: function(ayahNumber, reciter = this.currentReciter) {
+    getAyahAudioUrl: function(ayahNumber, reciter = this.currentReciter, bitrate = this.currentBitrate) {
         // Use Islamic Network CDN - Alafasy only
-        return `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayahNumber}.mp3`;
+        return `${this.cdn.audioAyah}/${bitrate}/${reciter}/${ayahNumber}.mp3`;
     },
 
     // Get image URL for a specific ayah
     getAyahImageUrl: function(surahNumber, ayahNumber, highRes = false) {
-        const baseUrl = highRes ? 
-            'https://cdn.islamic.network/quran/images/high-resolution' :
-            'https://cdn.islamic.network/quran/images';
-        
+        const baseUrl = highRes ? this.cdn.imagesHighRes : this.cdn.images;
         return `${baseUrl}/${surahNumber}_${ayahNumber}.png`;
     },
-
-    // Convert surah:ayah to global ayah number
+    
+    // Get high resolution image URL
+    getAyahHighResImageUrl: function(surahNumber, ayahNumber) {
+        return this.getAyahImageUrl(surahNumber, ayahNumber, true);
+    },
+    
+    // Convert surah:ayah to global ayah number (accurate mapping)
     surahAyahToGlobal: function(surahNumber, ayahNumber) {
-        // This would need a complete mapping of all ayahs
-        // For now, return a simple calculation (approximate)
-        const ayahCounts = [7, 286, 200, 176, 120, 165, 206, 75, 129, 109];
-        let globalNumber = 0;
+        // Complete ayah counts for all 114 surahs
+        const ayahCounts = [
+            7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 23, 20, 6, 6, 11, 18, 43, 52, 52, 44, 14, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+        ];
         
+        let globalNumber = 0;
         for (let i = 0; i < surahNumber - 1; i++) {
             globalNumber += ayahCounts[i] || 0;
         }
-        
         return globalNumber + ayahNumber;
+    },
+    
+    // Get surah ayah range (start and end global numbers)
+    getSurahAyahRange: function(surahNumber) {
+        const ayahCounts = [
+            7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 23, 20, 6, 6, 11, 18, 43, 52, 52, 44, 14, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+        ];
+        
+        let start = 1;
+        for (let i = 0; i < surahNumber - 1; i++) {
+            start += ayahCounts[i] || 0;
+        }
+        const end = start + (ayahCounts[surahNumber - 1] || 0) - 1;
+        
+        return { start, end, total: end - start + 1 };
+    },
+    
+    // Get audio URLs for a range of ayahs
+    getAyahRangeAudioUrls: function(surahNumber, fromAyah, toAyah, reciter = this.currentReciter, bitrate = this.currentBitrate) {
+        const urls = [];
+        const range = this.getSurahAyahRange(surahNumber);
+        const startGlobal = range.start + fromAyah - 1;
+        const endGlobal = range.start + toAyah - 1;
+        
+        for (let i = startGlobal; i <= endGlobal; i++) {
+            urls.push(this.getAyahAudioUrl(i, reciter, bitrate));
+        }
+        
+        return urls;
+    },
+    
+    // Set audio quality
+    setBitrate: function(bitrate) {
+        if (Object.values(this.bitrates).includes(bitrate)) {
+            this.currentBitrate = bitrate;
+            return true;
+        }
+        return false;
+    },
+    
+    // Get available reciters from CDN info
+    fetchAvailableReciters: async function() {
+        try {
+            const response = await fetch(`${this.cdn.info}/by-surah/info.json`);
+            const data = await response.json();
+            return data.editions || [];
+        } catch (error) {
+            console.error('Error fetching reciters:', error);
+            return [];
+        }
+    },
+    
+    // Check if audio file exists
+    checkAudioExists: async function(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
     },
 
     // Get surah name

@@ -562,9 +562,10 @@ const QuranReview = {
             ayahInfo.textContent = `${surah.name} - الآية ${ayahNumber}`;
         }
         
-        // Update image
+        // Update image with quality setting
         if (ayahImage && window.QuranAudio) {
-            const imageUrl = QuranAudio.getAyahImageUrl(surahId, ayahNumber);
+            const highRes = this.state.imageQuality === 'high';
+            const imageUrl = QuranAudio.getAyahImageUrl(surahId, ayahNumber, highRes);
             ayahImage.src = imageUrl;
             ayahImage.style.display = 'block';
             ayahImage.onerror = () => {
@@ -833,6 +834,22 @@ const QuranReview = {
         if (reciterSelector) {
             reciterSelector.addEventListener('change', () => {
                 this.updateReciter();
+            });
+        }
+        
+        // Audio quality selector
+        const audioQualitySelector = document.getElementById('audio-quality');
+        if (audioQualitySelector) {
+            audioQualitySelector.addEventListener('change', () => {
+                this.updateAudioQuality();
+            });
+        }
+        
+        // Image quality selector
+        const imageQualitySelector = document.getElementById('image-quality');
+        if (imageQualitySelector) {
+            imageQualitySelector.addEventListener('change', () => {
+                this.updateImageQuality();
             });
         }
     },
@@ -1237,6 +1254,27 @@ const QuranReview = {
                 console.log('🎵 Reciter updated to:', selectedReciter);
                 this.showNotification(`تم تغيير القارئ إلى: ${QuranAudio.getReciterName(selectedReciter)}`, 'success');
             }
+        }
+    },
+    
+    updateAudioQuality() {
+        const audioQualitySelector = document.getElementById('audio-quality');
+        
+        if (audioQualitySelector && window.QuranAudio) {
+            const bitrate = parseInt(audioQualitySelector.value);
+            if (QuranAudio.setBitrate(bitrate)) {
+                this.showNotification(`تم تغيير جودة الصوت إلى: ${bitrate} kbps`, 'success');
+            }
+        }
+    },
+    
+    updateImageQuality() {
+        const imageQualitySelector = document.getElementById('image-quality');
+        
+        if (imageQualitySelector) {
+            const quality = imageQualitySelector.value;
+            this.state.imageQuality = quality;
+            this.showNotification(`تم تغيير جودة الصور إلى: ${quality === 'high' ? 'عالية الدقة' : 'عادية'}`, 'success');
         }
     },
     
