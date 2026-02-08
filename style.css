@@ -476,6 +476,36 @@ body {
     }
 }
 
+/* Ward Navigation Controls */
+.ward-navigation {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.ward-navigation .btn {
+    flex: 1;
+    max-width: 120px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: white;
+}
+
 /* Ward Player Styles */
 .ward-player {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);

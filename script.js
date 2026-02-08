@@ -1670,20 +1670,36 @@ const QuranReview = {
             console.error('❌ DEBUG: Play Surah button not found!');
         }
         
-        if (stopWardBtn) {
-            stopWardBtn.addEventListener('click', () => {
-                console.log('⏹️ DEBUG: Stop Ward button clicked!');
+        // Stop button
+        const stopBtn = document.getElementById('stop-ward-btn');
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => {
                 this.stopWardPlayback();
             });
             console.log('✅ DEBUG: Stop Ward button event attached');
-        } else {
-            console.error('❌ DEBUG: Stop Ward button not found!');
         }
         
-        // Initialize ward state
+        // Navigation buttons
+        const prevBtn = document.getElementById('prev-ayah-btn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                this.playPreviousAyah();
+            });
+            console.log('✅ DEBUG: Previous Ayah button event attached');
+        }
+        
+        const nextBtn = document.getElementById('next-ayah-btn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                this.playNextAyahManually();
+            });
+            console.log('✅ DEBUG: Next Ayah button event attached');
+        }
+        
+        // Initialize ward player state
         this.state.wardPlayer = {
             isPlaying: false,
-            currentAyah: 0,
+            currentAyah: 1,
             totalAyahs: 0,
             mode: 'ward', // 'ward' or 'surah'
             surahId: null,
@@ -1961,6 +1977,62 @@ const QuranReview = {
         
         this.showNotification('⏹️ تم إيقاف التشغيل', 'info');
         console.log('✅ Ward playback stopped via AudioManager');
+    },
+    
+    playPreviousAyah() {
+        if (!this.state.wardPlayer.surahId || !this.state.wardPlayer.currentAyah) {
+            this.showNotification('يرجى تشغيل ورد أولاً', 'warning');
+            return;
+        }
+        
+        const { surahId, currentAyah, fromAyah } = this.state.wardPlayer;
+        
+        if (currentAyah <= fromAyah) {
+            this.showNotification('هذه هي أول آية في الورد', 'info');
+            return;
+        }
+        
+        const previousAyah = currentAyah - 1;
+        
+        // Stop current playback
+        AudioManager.stopAll();
+        
+        // Update state
+        this.state.wardPlayer.currentAyah = previousAyah;
+        this.state.wardPlayer.isPlaying = true;
+        
+        // Play previous ayah
+        AudioManager.playWirdAyahSequence(surahId, previousAyah, previousAyah);
+        
+        this.showNotification(`⏮️ العودة إلى الآية ${previousAyah}`, 'success');
+    },
+    
+    playNextAyahManually() {
+        if (!this.state.wardPlayer.surahId || !this.state.wardPlayer.currentAyah) {
+            this.showNotification('يرجى تشغيل ورد أولاً', 'warning');
+            return;
+        }
+        
+        const { surahId, currentAyah, toAyah } = this.state.wardPlayer;
+        
+        if (currentAyah >= toAyah) {
+            this.showNotification('هذه هي آخر آية في الورد', 'info');
+            return;
+        }
+        
+        const nextAyah = currentAyah + 1;
+        
+        // Stop current playback
+        AudioManager.stopAll();
+        
+        // Update state
+        this.state.wardPlayer.currentAyah = nextAyah;
+        this.state.wardPlayer.isPlaying = true;
+        
+        // Play next ayah
+        AudioManager.playWirdAyahSequence(surahId, nextAyah, nextAyah);
+        
+        this.showNotification(`⏭️ التقدم إلى الآية ${nextAyah}`, 'success');
     },
     
     updateWardDisplay() {
