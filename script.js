@@ -578,6 +578,14 @@ const QuranReview = {
                 this.addNewMemorization();
             });
         }
+        
+        // Reciter selector
+        const reciterSelector = document.getElementById('reciter-selector');
+        if (reciterSelector) {
+            reciterSelector.addEventListener('change', () => {
+                this.updateReciter();
+            });
+        }
     },
     
     addNewMemorization() {
@@ -970,22 +978,15 @@ const QuranReview = {
     
     updateReciter() {
         const reciterSelector = document.getElementById('reciter-selector');
-        const reciterElement = document.getElementById('audio-reciter');
         
-        if (reciterSelector && reciterElement) {
-            const reciterNames = {
-                'abdul_basit': 'عبد الباسط عبد الصمد',
-                'sudais': 'عبد الرحمن السديس',
-                'minshawi': 'محمد صديق المنشاوي',
-                'husary': 'محمود خليل الحصري'
-            };
-            
+        if (reciterSelector) {
             const selectedReciter = reciterSelector.value;
-            reciterElement.textContent = `القارئ: ${reciterNames[selectedReciter]}`;
             
             // Update QuranAudio current reciter
             if (window.QuranAudio) {
                 QuranAudio.setReciter(selectedReciter);
+                console.log('🎵 Reciter updated to:', selectedReciter);
+                this.showNotification(`تم تغيير القارئ إلى: ${QuranAudio.getReciterName(selectedReciter)}`, 'success');
             }
         }
     },
