@@ -157,14 +157,16 @@ const QuranAudio = {
     
     // Get audio URL for a surah
     getAudioUrl: function(surahNumber, reciter = this.currentReciter, bitrate = this.currentBitrate) {
-        // Use Islamic Network CDN - Alafasy only
-        return `${this.cdn.audioSurah}/${bitrate}/${reciter}/${surahNumber}.mp3`;
+        // Use Islamic Network CDN - Add "ar." prefix
+        const edition = `ar.${reciter}`;
+        return `${this.cdn.audioSurah}/${bitrate}/${edition}/${surahNumber}.mp3`;
     },
 
     // Get audio URL for a specific ayah
     getAyahAudioUrl: function(ayahNumber, reciter = this.currentReciter, bitrate = this.currentBitrate) {
-        // Use Islamic Network CDN - Alafasy only
-        return `${this.cdn.audioAyah}/${bitrate}/${reciter}/${ayahNumber}.mp3`;
+        // Use Islamic Network CDN - Add "ar." prefix
+        const edition = `ar.${reciter}`;
+        return `${this.cdn.audioAyah}/${bitrate}/${edition}/${ayahNumber}.mp3`;
     },
 
     // Get image URL for a specific ayah
