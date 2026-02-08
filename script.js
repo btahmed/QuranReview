@@ -1358,7 +1358,7 @@ const QuranReview = {
     // ===================================
     
     playAyahRange(surahId, fromAyah, toAyah) {
-        console.log('🎵 Starting sequential ayah playback');
+        console.log('🎵 Starting sequential ayah playback (الورد)');
         console.log('📊 Playback parameters:', {
             surahId: surahId,
             fromAyah: fromAyah,
@@ -1381,6 +1381,19 @@ const QuranReview = {
             }
             
             console.log('📖 Surah found:', surah.name);
+            
+            // Validate ayah range
+            if (fromAyah < 1 || toAyah > surah.ayahs || fromAyah > toAyah) {
+                console.error('❌ Invalid ayah range:', { fromAyah, toAyah, maxAyahs: surah.ayahs });
+                this.showNotification('نطاق الآيات غير صحيح', 'error');
+                return;
+            }
+            
+            // Stop any current playback
+            if (this.audioState.isPlaying) {
+                console.log('⏹️ Stopping current playback before starting new one');
+                this.stopSequentialAudio();
+            }
             
             // Get ayah range URLs
             console.log('🔗 Getting ayah range URLs...');
@@ -1406,12 +1419,15 @@ const QuranReview = {
             
             console.log('🎧 Audio state configured:', this.audioState);
             
+            // Show enhanced notification
+            const totalAyahs = toAyah - fromAyah + 1;
+            this.showNotification(`🎵 بدء الورد: ${surah.name} (${totalAyahs} آيات من ${fromAyah} إلى ${toAyah})`, 'success');
+            
             // Start playing first ayah
-            console.log('▶️ Starting playback...');
+            console.log('▶️ Starting sequential playback...');
             this.playNextAyahInQueue();
             
-            this.showNotification(`جاري تشغيل ${surah.name} من الآية ${fromAyah} إلى ${toAyah}`, 'success');
-            console.log('✅ Sequential playback started successfully');
+            console.log('✅ Sequential playback (الورد) started successfully');
             
         } catch (error) {
             console.error('❌ Error playing ayah range:', error);
@@ -1421,8 +1437,9 @@ const QuranReview = {
     
     playNextAyahInQueue() {
         if (this.audioState.currentAudioIndex >= this.audioState.audioQueue.length) {
+            console.log('🏁 Sequential playback completed');
             this.stopSequentialAudio();
-            this.showNotification('انتهى تشغيل الآيات', 'success');
+            this.showNotification('🎉 انتهى الورد بنجاح', 'success');
             return;
         }
         
@@ -1432,6 +1449,7 @@ const QuranReview = {
         const reciterElement = document.getElementById('audio-reciter');
         
         if (!audioElement || !audioSource) {
+            console.error('❌ Audio elements not found');
             this.showNotification('مشغل الصوت غير متاح', 'error');
             return;
         }
@@ -1440,12 +1458,15 @@ const QuranReview = {
         const currentAyah = this.audioState.currentAyah + this.audioState.currentAudioIndex;
         const surah = this.config.surahs.find(s => s.id === this.audioState.currentSurah);
         
+        console.log(`🎵 Playing ayah ${currentAyah} of ${surah.name} (${this.audioState.currentAudioIndex + 1}/${this.audioState.audioQueue.length})`);
+        
         // Set audio source
         audioSource.src = currentUrl;
         
-        // Update UI
+        // Update UI with progress
         if (surahNameElement) {
-            surahNameElement.textContent = `${surah.name} - الآية ${currentAyah}`;
+            const progress = `${this.audioState.currentAudioIndex + 1}/${this.audioState.audioQueue.length}`;
+            surahNameElement.textContent = `${surah.name} - الآية ${currentAyah} (${progress})`;
         }
         
         if (reciterElement) {
@@ -1457,6 +1478,7 @@ const QuranReview = {
         
         // Setup ended event for next ayah
         audioElement.onended = () => {
+            console.log(`✅ Ayah ${currentAyah} completed`);
             this.audioState.currentAudioIndex++;
             this.playNextAyahInQueue();
         };
@@ -1465,11 +1487,18 @@ const QuranReview = {
         audioElement.load();
         audioElement.play()
             .then(() => {
-                console.log(`🎵 Playing ayah ${currentAyah} of ${surah.name}`);
+                console.log(`🎵 Successfully playing ayah ${currentAyah} of ${surah.name}`);
                 console.log(`🖼️ Displaying image for ayah ${currentAyah}`);
+                
+                // Show progress notification for longer surahs
+                if (this.audioState.audioQueue.length > 5) {
+                    const progress = Math.round(((this.audioState.currentAudioIndex + 1) / this.audioState.audioQueue.length) * 100);
+                    console.log(`📊 Progress: ${progress}%`);
+                }
             })
             .catch(error => {
                 console.error('❌ Error playing ayah:', error);
+                // Continue to next ayah even if current fails
                 this.audioState.currentAudioIndex++;
                 this.playNextAyahInQueue();
             });
@@ -1618,35 +1647,70 @@ const QuranReview = {
     },
     
     updateAyahLimits() {
+        console.log('📊 Updating ayah limits...');
         const surahSelect = document.getElementById('surah-select');
         const fromAyahInput = document.getElementById('from-ayah');
         const toAyahInput = document.getElementById('to-ayah');
         
-        if (!surahSelect || !fromAyahInput || !toAyahInput) return;
+        if (!surahSelect || !fromAyahInput || !toAyahInput) {
+            console.error('❌ Form elements not found');
+            return;
+        }
         
         const surahId = parseInt(surahSelect.value);
-        if (!surahId) return;
+        if (!surahId) {
+            console.log('📭 No surah selected, clearing limits');
+            fromAyahInput.max = '';
+            toAyahInput.max = '';
+            fromAyahInput.placeholder = 'اختر السورة أولاً';
+            toAyahInput.placeholder = 'اختر السورة أولاً';
+            return;
+        }
         
         const surah = this.config.surahs.find(s => s.id === surahId);
-        if (!surah) return;
+        if (!surah) {
+            console.error('❌ Surah not found:', surahId);
+            return;
+        }
+        
+        console.log(`📖 Found surah: ${surah.name} with ${surah.ayahs} ayahs`);
         
         // Update max values
         fromAyahInput.max = surah.ayahs;
         toAyahInput.max = surah.ayahs;
         
-        // Update placeholder
-        fromAyahInput.placeholder = `من 1 إلى ${surah.ayahs}`;
-        toAyahInput.placeholder = `من 1 إلى ${surah.ayahs}`;
+        // Update placeholder with Arabic text
+        const placeholderText = `من 1 إلى ${surah.ayahs}`;
+        fromAyahInput.placeholder = placeholderText;
+        toAyahInput.placeholder = placeholderText;
         
         // Clear current values if they exceed the limit
-        if (parseInt(fromAyahInput.value) > surah.ayahs) {
+        const fromValue = parseInt(fromAyahInput.value);
+        const toValue = parseInt(toAyahInput.value);
+        
+        if (fromValue > surah.ayahs) {
+            console.log(`🔄 Clearing from-ayah value ${fromValue} > ${surah.ayahs}`);
             fromAyahInput.value = '';
         }
-        if (parseInt(toAyahInput.value) > surah.ayahs) {
+        
+        if (toValue > surah.ayahs) {
+            console.log(`🔄 Clearing to-ayah value ${toValue} > ${surah.ayahs}`);
             toAyahInput.value = '';
         }
         
-        console.log(`📊 Updated ayah limits for Surah ${surahId}: 1-${surah.ayahs}`);
+        // Auto-set toAyah if fromAyah is valid and toAyah is empty
+        if (fromValue && fromValue <= surah.ayahs && !toValue) {
+            const suggestedTo = Math.min(fromValue + 7, surah.ayahs); // Suggest 7 ayahs or max
+            toAyahInput.value = suggestedTo;
+            console.log(`💡 Suggested to-ayah: ${suggestedTo} (from ${fromValue})`);
+        }
+        
+        // Add visual feedback
+        fromAyahInput.style.borderColor = fromValue && fromValue <= surah.ayahs ? '#28a745' : '#dee2e6';
+        toAyahInput.style.borderColor = toValue && toValue <= surah.ayahs ? '#28a745' : '#dee2e6';
+        
+        console.log(`✅ Updated ayah limits for Surah ${surahId} (${surah.name}): 1-${surah.ayahs}`);
+        console.log(`📊 Current values: from=${fromValue || 'empty'}, to=${toValue || 'empty'}`);
     },
     
     populateSurahSelect() {
