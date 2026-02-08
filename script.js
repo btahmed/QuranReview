@@ -353,6 +353,9 @@ const QuranReview = {
             case 'home':
                 this.renderHomePage();
                 break;
+            case 'memorization':
+                this.renderMemorizationPage();
+                break;
             case 'reading':
                 this.renderReadingPage();
                 break;
