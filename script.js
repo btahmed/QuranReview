@@ -2178,6 +2178,120 @@ const QuranReview = {
     },
     
     // ===================================
+    // WARD PLAYER PLAYBACK FUNCTIONS
+    // ===================================
+    
+    playWard() {
+        console.log('🎵 Starting Ward playback - using AudioManager...');
+        
+        const surahSelect = document.getElementById('ward-surah-select');
+        const fromAyahInput = document.getElementById('ward-from-ayah');
+        const toAyahInput = document.getElementById('ward-to-ayah');
+        
+        if (!surahSelect || !fromAyahInput || !toAyahInput) {
+            this.showNotification('يرجى اختيار السورة والآيات', 'warning');
+            return;
+        }
+        
+        const surahId = parseInt(surahSelect.value);
+        const fromAyah = parseInt(fromAyahInput.value);
+        const toAyah = parseInt(toAyahInput.value);
+        
+        if (!surahId || !fromAyah || !toAyah) {
+            this.showNotification('يرجى اختيار السورة والآيات', 'warning');
+            return;
+        }
+        
+        // VALIDATION: fromAyah must be <= toAyah
+        if (fromAyah > toAyah) {
+            this.showNotification('❌ خطأ: من الآية يجب أن يكون أصغر أو يساوي إلى الآية', 'error');
+            console.error(`❌ Invalid ayah range: from ${fromAyah} > to ${toAyah}`);
+            return;
+        }
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Additional validation: check against surah ayah count
+        if (fromAyah < 1 || toAyah > surah.ayahs) {
+            this.showNotification(`❌ خطأ: الآيات يجب أن تكون بين 1 و ${surah.ayahs}`, 'error');
+            console.error(`❌ Invalid ayah range: ${fromAyah}-${toAyah} for surah ${surahId} (max: ${surah.ayahs})`);
+            return;
+        }
+        
+        console.log(`✅ Valid ayah range: ${fromAyah}-${toAyah} for surah ${surah.name}`);
+        
+        // Setup ward player state for display
+        this.state.wardPlayer = {
+            isPlaying: true,
+            currentAyah: fromAyah,
+            totalAyahs: toAyah - fromAyah + 1,
+            mode: 'ward',
+            surahId: surahId,
+            fromAyah: fromAyah,
+            toAyah: toAyah
+        };
+        
+        // Update display
+        this.updateWardDisplay();
+        
+        // Use AudioManager to play
+        AudioManager.playWirdAyahSequence(surahId, fromAyah, toAyah);
+        
+        this.showNotification(`🎧 جاري تشغيل ورد ${surah.name} (${fromAyah}-${toAyah})`, 'success');
+        console.log('✅ Ward playback started successfully via AudioManager');
+    },
+    
+    playFullSurah() {
+        console.log('📖 Starting Full Surah playback - using AudioManager...');
+        
+        const surahSelect = document.getElementById('ward-surah-select');
+        
+        if (!surahSelect) {
+            this.showNotification('يرجى اختيار السورة', 'warning');
+            return;
+        }
+        
+        const surahId = parseInt(surahSelect.value);
+        if (!surahId) {
+            this.showNotification('يرجى اختيار السورة', 'warning');
+            return;
+        }
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Check audio source
+        const audioSource = this.state.settings.audioSource || 'cdn';
+        
+        // Setup ward player state for display
+        this.state.wardPlayer = {
+            isPlaying: true,
+            currentAyah: 1,
+            totalAyahs: surah.ayahs,
+            mode: audioSource === 'local' ? 'surah-local' : 'surah',
+            surahId: surahId,
+            fromAyah: 1,
+            toAyah: surah.ayahs
+        };
+        
+        // Update display
+        this.updateWardDisplay();
+        this.updateWardAyahDisplay(surahId, 1);
+        
+        // Use AudioManager to play
+        if (audioSource === 'local') {
+            AudioManager.playFullSurah(surahId);
+            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (ملف محلي)`, 'success');
+        } else {
+            AudioManager.playFullSurahFromCDN(surahId);
+            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (CDN)`, 'success');
+        }
+        
+        console.log('✅ Full Surah playback started successfully via AudioManager');
+    },
+    
+    // ===================================
     // IMPROVED SPACED REPETITION
     // ===================================
     
