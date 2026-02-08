@@ -1710,7 +1710,16 @@ document.head.appendChild(style);
 // Global error handling
 window.addEventListener('error', (e) => {
     console.error('❌ Application Error:', e.error);
-    QuranReview.showNotification('حدث خطأ في التطبيق', 'error');
+    // Only show notification for critical errors, not for minor ones
+    if (e.error && e.error.message && !e.error.message.includes('NetworkError')) {
+        QuranReview.showNotification('حدث خطأ في التطبيق', 'error');
+    }
+});
+
+// Handle unhandled promise rejections
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('❌ Unhandled Promise Rejection:', e.reason);
+    // Don't show notification for promise rejections to avoid spam
 });
 
 // Make QuranReview available globally
