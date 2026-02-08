@@ -13,7 +13,6 @@ const AudioManager = {
     timers: new Set(),
     onEnded: null,
     currentAudio: null,  // For individual ayah audio elements
-    backgroundAudio: null, // For full surah background audio
 
     init() {
         this.audio = document.getElementById("audio-element");
@@ -49,13 +48,6 @@ const AudioManager = {
             this.currentAudio.currentTime = 0;
             this.currentAudio = null;
         }
-        
-        // Stop background audio if playing
-        if (this.backgroundAudio) {
-            this.backgroundAudio.pause();
-            this.backgroundAudio.currentTime = 0;
-            this.backgroundAudio = null;
-        }
 
         // Clear all timers
         for (const t of this.timers) clearTimeout(t);
@@ -67,84 +59,34 @@ const AudioManager = {
         console.log(' All audio stopped and cleared');
     },
 
-    playFullSurahAsWird(surahId, fromAyah, toAyah) {
-        // Start background audio FIRST (without stopping anything)
+    playFullSurah(surahId) {
+        this.stopAll();
+        this.mode = "full";
         const src = `audio/${String(surahId).padStart(3, "0")}.mp3`;
-        console.log(`🎵 AudioManager: Starting background audio from ${src}`);
-        
-        // Create separate audio element for background
-        const backgroundAudio = new Audio(src);
-        backgroundAudio.play().catch(error => {
-            console.error('❌ Error playing background audio:', error);
+
+        console.log(` Playing full surah ${surahId} from ${src}`);
+
+        this.audio.src = src;
+        this.audio.play().catch(error => {
+            console.error(' Error playing full surah:', error);
+            // Fallback to CDN
+            this.playFullSurahFromCDN(surahId);
         });
-        
-        // Store background audio reference
-        this.backgroundAudio = backgroundAudio;
-        
-        // Then start wird sequence
-        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
     },
-    
-    playFullSurahFromCDNAsWird(surahId, fromAyah, toAyah) {
+
+    playFullSurahFromCDN(surahId) {
         if (!window.QuranAudio) return;
-        
-        // Start background audio FIRST (without stopping anything)
+
+        this.stopAll();
+        this.mode = "full";
+
         const audioUrl = window.QuranAudio.getAudioUrl(surahId);
-        console.log(`🎵 AudioManager: Starting background audio from CDN: ${audioUrl}`);
-        
-        // Create separate audio element for background
-        const backgroundAudio = new Audio(audioUrl);
-        backgroundAudio.play().catch(error => {
-            console.error('❌ Error playing background audio:', error);
+        console.log(` Playing full surah ${surahId} from CDN: ${audioUrl}`);
+
+        this.audio.src = audioUrl;
+        this.audio.play().catch(error => {
+            console.error(' Error playing CDN surah:', error);
         });
-        
-        // Store background audio reference
-        this.backgroundAudio = backgroundAudio;
-        
-        // Then start wird sequence
-        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
-    },
-
-    startImageSyncForSurah(surahId) {
-        if (!window.QuranAudio) return;
-
-        const surah = QuranReview.config.surahs.find(s => s.id === surahId);
-        if (!surah) return;
-
-        const delay = (QuranReview.state.settings.ayahDelay || 2.0) * 1000;
-        let currentAyah = 1;
-
-        console.log(`🖼️ Starting image sync for surah ${surahId} with ${delay}ms delay`);
-
-        const syncTimer = setInterval(() => {
-            // Stop sync if mode changed or audio ended
-            if (this.mode !== "full" || (this.audio && this.audio.ended)) {
-                clearInterval(syncTimer);
-                this.timers.delete(syncTimer);
-                console.log('🖼️ Image sync stopped');
-                return;
-            }
-
-            // Update image display
-            QuranReview.updateWardAyahDisplay(surahId, currentAyah);
-
-            // Update progress
-            if (QuranReview.state.wardPlayer) {
-                QuranReview.state.wardPlayer.currentAyah = currentAyah;
-                QuranReview.updateWardDisplay();
-            }
-
-            currentAyah++;
-
-            // Stop at end of surah
-            if (currentAyah > surah.ayahs) {
-                clearInterval(syncTimer);
-                this.timers.delete(syncTimer);
-                console.log('🖼️ Image sync completed');
-            }
-        }, delay);
-
-        this.timers.add(syncTimer);
     },
 
     playWirdAyahSequence(surahId, fromAyah, toAyah) {
@@ -271,8 +213,7 @@ const QuranReview = {
             notifications: true,
             // Ward Player Settings
             ayahDelay: 2.0, // seconds between ayahs
-            autoPlayNext: true,
-            syncImages: true // sync images with full surah
+            autoPlayNext: true
         },
         
         // Quran Data - Complete 114 Surahs
@@ -795,14 +736,6 @@ const QuranReview = {
             });
         }
         
-        // Sync images checkbox
-        const syncImagesCheckbox = document.getElementById('ward-sync-images');
-        if (syncImagesCheckbox) {
-            syncImagesCheckbox.addEventListener('change', () => {
-                this.updateWardSyncImages();
-            });
-        }
-        
         console.log('✅ Ward controls setup completed');
     },
     
@@ -920,17 +853,6 @@ const QuranReview = {
             this.state.settings.autoPlayNext = autoPlayNext;
             this.showNotification(`تم ${autoPlayNext ? 'تفعيل تشغيل الآية التالية' : 'إيقاف تشغيل الآية التالية'}`, 'success');
             console.log(`🔄 Auto-play next: ${autoPlayNext}`);
-        }
-    },
-    
-    updateWardSyncImages() {
-        const syncImagesCheckbox = document.getElementById('ward-sync-images');
-        
-        if (syncImagesCheckbox) {
-            const syncImages = syncImagesCheckbox.checked;
-            this.state.settings.syncImages = syncImages;
-            this.showNotification(`تم ${syncImages ? 'تفعيل مزامنة الصور' : 'إيقاف مزامنة الصور'}`, 'success');
-            console.log(`🖼️ Sync images: ${syncImages}`);
         }
     },
     
@@ -1861,7 +1783,7 @@ const QuranReview = {
     },
     
     playFullSurah() {
-        console.log('📖 Starting Full Surah playback - using Wird mode from 1 to end...');
+        console.log('📖 Starting Full Surah playback - using CDN ayah by ayah for image sync...');
         
         const surahSelect = document.getElementById('ward-surah-select');
         
@@ -1876,24 +1798,15 @@ const QuranReview = {
         const surah = this.config.surahs.find(s => s.id === surahId);
         if (!surah) return;
         
-        // Auto-fill the ward inputs with full surah range
-        const fromAyahInput = document.getElementById('ward-from-ayah');
-        const toAyahInput = document.getElementById('ward-to-ayah');
+        // TOUJOURS utiliser CDN ayah par ayah pour la synchronisation des images
+        // Même si source audio est "local", on utilise CDN pour les images synchronisées
         
-        if (fromAyahInput && toAyahInput) {
-            fromAyahInput.value = 1;
-            toAyahInput.value = surah.ayahs;
-        }
-        
-        // Check audio source
-        const audioSource = this.state.settings.audioSource || 'cdn';
-        
-        // Setup ward player state for full surah as wird
+        // Setup ward player state for full surah
         this.state.wardPlayer = {
             isPlaying: true,
             currentAyah: 1,
             totalAyahs: surah.ayahs,
-            mode: 'ward', // Use ward mode for consistency
+            mode: 'surah', // Toujours 'surah' pour ayah par ayah
             surahId: surahId,
             fromAyah: 1,
             toAyah: surah.ayahs
@@ -1903,16 +1816,11 @@ const QuranReview = {
         this.updateWardDisplay();
         this.updateWardAyahDisplay(surahId, 1);
         
-        // Use AudioManager with special full surah mode
-        if (audioSource === 'local') {
-            AudioManager.playFullSurahAsWird(surahId, 1, surah.ayahs);
-            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (ملف محلي + صور متزامنة)`, 'success');
-        } else {
-            AudioManager.playFullSurahFromCDNAsWird(surahId, 1, surah.ayahs);
-            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (CDN + صور متزامنة)`, 'success');
-        }
+        // TOUJOURS utiliser AudioManager avec CDN pour synchronisation images
+        AudioManager.playWirdAyahSequence(surahId, 1, surah.ayahs);
         
-        console.log('✅ Full Surah playback started as Wird mode');
+        this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (مع مزامنة الصور)`, 'success');
+        console.log('✅ Full Surah playback started with CDN for image sync');
     },
     
     playLocalSurah(surahId, surah) {
