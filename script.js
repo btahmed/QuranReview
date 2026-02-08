@@ -64,11 +64,18 @@ const AudioManager = {
         this.mode = "full";
         const src = `audio/${String(surahId).padStart(3, "0")}.mp3`;
 
-        console.log(` Playing full surah ${surahId} from ${src}`);
+        console.log(`🎵 AudioManager: Playing full surah ${surahId} from ${src}`);
+
+        // Check if image sync is enabled
+        const syncImages = QuranReview.state.settings.syncImages;
+
+        if (syncImages) {
+            this.startImageSyncForSurah(surahId);
+        }
 
         this.audio.src = src;
         this.audio.play().catch(error => {
-            console.error(' Error playing full surah:', error);
+            console.error('❌ Error playing full surah:', error);
             // Fallback to CDN
             this.playFullSurahFromCDN(surahId);
         });
@@ -81,12 +88,61 @@ const AudioManager = {
         this.mode = "full";
 
         const audioUrl = window.QuranAudio.getAudioUrl(surahId);
-        console.log(` Playing full surah ${surahId} from CDN: ${audioUrl}`);
+        console.log(`🎵 AudioManager: Playing full surah ${surahId} from CDN: ${audioUrl}`);
+
+        // Check if image sync is enabled
+        const syncImages = QuranReview.state.settings.syncImages;
+
+        if (syncImages) {
+            this.startImageSyncForSurah(surahId);
+        }
 
         this.audio.src = audioUrl;
         this.audio.play().catch(error => {
-            console.error(' Error playing CDN surah:', error);
+            console.error('❌ Error playing CDN surah:', error);
         });
+    },
+
+    startImageSyncForSurah(surahId) {
+        if (!window.QuranAudio) return;
+
+        const surah = QuranReview.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+
+        const delay = (QuranReview.state.settings.ayahDelay || 2.0) * 1000;
+        let currentAyah = 1;
+
+        console.log(`🖼️ Starting image sync for surah ${surahId} with ${delay}ms delay`);
+
+        const syncTimer = setInterval(() => {
+            // Stop sync if mode changed or audio ended
+            if (this.mode !== "full" || (this.audio && this.audio.ended)) {
+                clearInterval(syncTimer);
+                this.timers.delete(syncTimer);
+                console.log('🖼️ Image sync stopped');
+                return;
+            }
+
+            // Update image display
+            QuranReview.updateWardAyahDisplay(surahId, currentAyah);
+
+            // Update progress
+            if (QuranReview.state.wardPlayer) {
+                QuranReview.state.wardPlayer.currentAyah = currentAyah;
+                QuranReview.updateWardDisplay();
+            }
+
+            currentAyah++;
+
+            // Stop at end of surah
+            if (currentAyah > surah.ayahs) {
+                clearInterval(syncTimer);
+                this.timers.delete(syncTimer);
+                console.log('🖼️ Image sync completed');
+            }
+        }, delay);
+
+        this.timers.add(syncTimer);
     },
 
     playWirdAyahSequence(surahId, fromAyah, toAyah) {
@@ -213,7 +269,8 @@ const QuranReview = {
             notifications: true,
             // Ward Player Settings
             ayahDelay: 2.0, // seconds between ayahs
-            autoPlayNext: true
+            autoPlayNext: true,
+            syncImages: true // sync images with full surah
         },
         
         // Quran Data - Complete 114 Surahs
@@ -736,6 +793,14 @@ const QuranReview = {
             });
         }
         
+        // Sync images checkbox
+        const syncImagesCheckbox = document.getElementById('ward-sync-images');
+        if (syncImagesCheckbox) {
+            syncImagesCheckbox.addEventListener('change', () => {
+                this.updateWardSyncImages();
+            });
+        }
+        
         console.log('✅ Ward controls setup completed');
     },
     
@@ -853,6 +918,17 @@ const QuranReview = {
             this.state.settings.autoPlayNext = autoPlayNext;
             this.showNotification(`تم ${autoPlayNext ? 'تفعيل تشغيل الآية التالية' : 'إيقاف تشغيل الآية التالية'}`, 'success');
             console.log(`🔄 Auto-play next: ${autoPlayNext}`);
+        }
+    },
+    
+    updateWardSyncImages() {
+        const syncImagesCheckbox = document.getElementById('ward-sync-images');
+        
+        if (syncImagesCheckbox) {
+            const syncImages = syncImagesCheckbox.checked;
+            this.state.settings.syncImages = syncImages;
+            this.showNotification(`تم ${syncImages ? 'تفعيل مزامنة الصور' : 'إيقاف مزامنة الصور'}`, 'success');
+            console.log(`🖼️ Sync images: ${syncImages}`);
         }
     },
     
