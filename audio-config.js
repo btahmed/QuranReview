@@ -149,15 +149,13 @@ const QuranAudio = {
 
     // Get audio URL for a surah
     getAudioUrl: function(surahNumber, reciter = this.currentReciter) {
-        const fileName = surahNumber.toString().padStart(3, '0');
-        
         // Use Islamic Network CDN (official AlQuran.cloud API)
         const cdnUrls = {
             'alafasy': `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahNumber}.mp3`,
-            'abdul_basit': `https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasit/${surahNumber}.mp3`,
-            'sudais': `https://cdn.islamic.network/quran/audio-surah/128/ar.sudais/${surahNumber}.mp3`,
+            'abdul_basit': `https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasit_mujawwad/${surahNumber}.mp3`,
+            'sudais': `https://cdn.islamic.network/quran/audio-surah/128/ar.sudais_makkah/${surahNumber}.mp3`,
             'minshawi': `https://cdn.islamic.network/quran/audio-surah/128/ar.minshawi_mujawwad/${surahNumber}.mp3`,
-            'husary': `https://cdn.islamic.network/quran/audio-surah/128/ar.husary/${surahNumber}.mp3`
+            'husary': `https://cdn.islamic.network/quran/audio-surah/128/ar.husary_mujawwad/${surahNumber}.mp3`
         };
         
         return cdnUrls[reciter] || cdnUrls['alafasy'];
@@ -168,10 +166,10 @@ const QuranAudio = {
         // Use Islamic Network CDN for ayah-by-ayah audio
         const cdnUrls = {
             'alafasy': `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayahNumber}.mp3`,
-            'abdul_basit': `https://cdn.islamic.network/quran/audio/128/ar.abdulbasit/${ayahNumber}.mp3`,
-            'sudais': `https://cdn.islamic.network/quran/audio/128/ar.sudais/${ayahNumber}.mp3`,
+            'abdul_basit': `https://cdn.islamic.network/quran/audio/128/ar.abdulbasit_mujawwad/${ayahNumber}.mp3`,
+            'sudais': `https://cdn.islamic.network/quran/audio/128/ar.sudais_makkah/${ayahNumber}.mp3`,
             'minshawi': `https://cdn.islamic.network/quran/audio/128/ar.minshawi_mujawwad/${ayahNumber}.mp3`,
-            'husary': `https://cdn.islamic.network/quran/audio/128/ar.husary/${ayahNumber}.mp3`
+            'husary': `https://cdn.islamic.network/quran/audio/128/ar.husary_mujawwad/${ayahNumber}.mp3`
         };
         
         return cdnUrls[reciter] || cdnUrls['alafasy'];
