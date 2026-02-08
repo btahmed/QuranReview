@@ -2286,8 +2286,16 @@ document.head.appendChild(style);
 
 // Global error handling
 window.addEventListener('error', (e) => {
-    console.error('❌ Application Error:', e.error);
-    QuranReview.showNotification('حدث خطأ في التطبيق', 'error');
+  const msg = e?.message || 'Unknown error';
+  console.error('❌ Application Error:', e.error || msg);
+  QuranReview.showNotification(`خطأ: ${msg}`, 'error');
+});
+
+// Global unhandled promise rejection handling
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = e?.reason?.message || e?.reason || 'Unhandled promise rejection';
+  console.error('❌ Unhandled Promise Rejection:', e.reason);
+  QuranReview.showNotification(`خطأ: ${msg}`, 'error');
 });
 
 // Make QuranReview available globally
