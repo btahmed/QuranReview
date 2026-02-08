@@ -147,19 +147,7 @@ const QuranReview = {
         currentPage: 'home',
         memorizationData: [],
         settings: {},
-        todayDate: new Date().toISOString().split('T')[0],
-        imageQuality: 'normal'
-    },
-    
-    // Audio player state
-    audioState: {
-        isPlaying: false,
-        currentMode: 'single', // 'single', 'ayah-range', 'surah'
-        currentSurah: null,
-        currentAyah: null,
-        toAyah: null,
-        audioQueue: [],
-        currentAudioIndex: 0
+        todayDate: new Date().toISOString().split('T')[0]
     },
     
     // ===================================
@@ -167,65 +155,39 @@ const QuranReview = {
     // ===================================
     
     init() {
-        console.log('🕌 QuranReview App Initializing...');
-        console.log('📋 Configuration:', {
-            appName: this.config.appName,
-            version: this.config.version,
-            storageKey: this.config.storageKey,
-            themeKey: this.config.themeKey
-        });
+        console.log(' Initializing QuranReview App...');
         
-        // Load saved data
-        console.log('📁 Loading saved data...');
+        // Initialize state
+        this.state = {
+            currentPage: 'home',
+            memorizationData: [],
+            settings: { ...this.config.defaultSettings },
+            todayDate: new Date().toISOString().split('T')[0],
+            imageQuality: 'normal'
+        };
+        
+        // Load data
         this.loadData();
-        console.log('✅ Data loaded:', {
-            memorizationData: this.state.memorizationData.length + ' items',
-            settings: Object.keys(this.state.settings),
-            todayDate: this.state.todayDate
-        });
-        
-        // Initialize theme
-        console.log('🎨 Initializing theme...');
-        this.initTheme();
-        console.log('✅ Theme initialized:', this.state.settings.theme);
         
         // Setup navigation
-        console.log('🧭 Setting up navigation...');
         this.setupNavigation();
-        console.log('✅ Navigation setup complete');
-        
-        // Setup forms
-        console.log('📝 Setting up forms...');
-        this.setupForms();
-        console.log('✅ Forms setup complete');
         
         // Initialize audio player
-        console.log('🎵 Initializing audio player...');
         this.initAudioPlayer();
-        console.log('✅ Audio player initialized');
         
-        // Populate surah select
-        console.log('📖 Populating surah select...');
-        this.populateSurahSelect();
-        console.log('✅ Surah select populated with 114 surahs');
+        // Initialize ward player
+        this.initWardPlayer();
+        
+        // Initialize theme
+        this.initTheme();
         
         // Render initial page
-        console.log('🏠 Rendering initial page...');
-        this.navigateTo('home');
-        console.log('✅ Initial page rendered');
+        this.renderPage('home');
         
-        // Setup auto-save
-        console.log('💾 Setting up auto-save...');
-        this.setupAutoSave();
-        console.log('✅ Auto-save setup complete');
+        // Update today's date
+        this.updateTodayDate();
         
-        console.log('🎉 QuranReview App Ready!');
-        console.log('🌐 App URL: https://btahmed.github.io/QuranReview/');
-        console.log('📊 Current state:', {
-            currentPage: this.state.currentPage,
-            totalMemorization: this.state.memorizationData.length,
-            settings: this.state.settings
-        });
+        console.log(' QuranReview App initialized successfully');
     },
     
     // ===================================
@@ -355,34 +317,27 @@ const QuranReview = {
     
     navigateTo(pageName) {
         console.log('🔄 Navigating to:', pageName);
-        console.log('📊 Navigation details:', {
-            fromPage: this.state.currentPage,
-            toPage: pageName,
-            timestamp: new Date().toISOString()
-        });
         
         // Update navigation
-        console.log('🧭 Updating navigation links...');
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
         const activeLink = document.querySelector(`[data-page="${pageName}"]`);
         if (activeLink) {
             activeLink.classList.add('active');
-            console.log('✅ Navigation link updated:', pageName);
+            console.log('✅ Navigation link updated');
         } else {
             console.error('❌ Navigation link not found:', pageName);
         }
         
         // Update pages
-        console.log('📄 Updating page elements...');
         document.querySelectorAll('.page').forEach(page => {
             page.classList.remove('active');
         });
         const targetPage = document.getElementById(`${pageName}-page`);
         if (targetPage) {
             targetPage.classList.add('active');
-            console.log('✅ Page element updated:', `${pageName}-page`);
+            console.log('✅ Page element updated');
         } else {
             console.error('❌ Page element not found:', `${pageName}-page`);
         }
@@ -390,15 +345,9 @@ const QuranReview = {
         this.state.currentPage = pageName;
         
         // Render page content
-        console.log('🎨 Rendering page content...');
         this.renderPage(pageName);
         
         console.log('📍 Navigation completed to:', pageName);
-        console.log('📊 New state:', {
-            currentPage: this.state.currentPage,
-            activeElements: document.querySelectorAll('.page.active').length,
-            activeLinks: document.querySelectorAll('.nav-link.active').length
-        });
     },
     
     // ===================================
@@ -737,30 +686,19 @@ const QuranReview = {
     // ===================================
     
     renderMemorizationTable() {
-        console.log('📋 Rendering memorization table...');
         const tableBody = document.getElementById('memorization-table-body');
-        if (!tableBody) {
-            console.error('❌ Table body not found!');
-            return;
-        }
+        if (!tableBody) return;
         
         const todayData = this.getTodayMemorizationData();
-        console.log('📊 Today data:', todayData);
-        console.log('📈 Data counts:', {
-            previouslyMemorized: todayData.previouslyMemorized.length,
-            todayReview: todayData.todayReview.length,
-            newMemorization: todayData.newMemorization.length
-        });
         
         // Render sections separately to avoid duplication
         let html = '';
         
         // Previously memorized section
         if (todayData.previouslyMemorized.length > 0) {
-            console.log('📚 Rendering previously memorized section...');
             html += `
                 <tr class="section-header">
-                    <td colspan="3" style="background: #2d5016; color: white; text-align: center; font-weight: bold;">
+                    <td colspan="7" style="background: var(--accent-green); color: white; text-align: center; font-weight: bold;">
                         📚 محفوظ سابقًا (للتثبيت)
                     </td>
                 </tr>
@@ -770,10 +708,9 @@ const QuranReview = {
         
         // Today's review section
         if (todayData.todayReview.length > 0) {
-            console.log('📋 Rendering today review section...');
             html += `
                 <tr class="section-header">
-                    <td colspan="3" style="background: #d4a574; color: white; text-align: center; font-weight: bold;">
+                    <td colspan="7" style="background: var(--accent-gold); color: white; text-align: center; font-weight: bold;">
                         📋 مراجعة اليوم
                     </td>
                 </tr>
@@ -783,10 +720,9 @@ const QuranReview = {
         
         // New memorization section
         if (todayData.newMemorization.length > 0) {
-            console.log('✨ Rendering new memorization section...');
             html += `
                 <tr class="section-header">
-                    <td colspan="3" style="background: #8b2635; color: white; text-align: center; font-weight: bold;">
+                    <td colspan="7" style="background: var(--accent-red); color: white; text-align: center; font-weight: bold;">
                         ✨ حفظ جديد
                     </td>
                 </tr>
@@ -798,10 +734,9 @@ const QuranReview = {
         if (todayData.previouslyMemorized.length === 0 && 
             todayData.todayReview.length === 0 && 
             todayData.newMemorization.length === 0) {
-            console.log('📭 No data to display, showing empty message...');
             html += `
                 <tr>
-                    <td colspan="3" style="text-align: center; padding: 2rem; color: #6c757d;">
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                         لا توجد عناصر للحفظ اليوم. أضف حفظًا جديدًا للبدء!
                     </td>
                 </tr>
@@ -809,42 +744,37 @@ const QuranReview = {
         }
         
         tableBody.innerHTML = html;
-        console.log('✅ Memorization table rendered successfully');
-        console.log('📊 Final HTML length:', html.length, 'characters');
     },
     
     createTableRow(item) {
-    return `
-        <tr>
-            <td>
-                <span class="status-badge status-${item.status}">${this.getStatusText(item.status)}</span>
-            </td>
-            <td>
-                <div>
-                    <strong>${item.surahName}</strong><br>
-                    <small>من ${item.fromAyah} إلى ${item.toAyah}</small>
-                </div>
-            </td>
-            <td>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-sm btn-primary" onclick="QuranReview.playAyahRange(${item.surahId}, ${item.fromAyah}, ${item.toAyah})">
-                        🎵 استماع للآيات
+        return `
+            <tr>
+                <td class="arabic-text">${item.surahName}</td>
+                <td>${item.fromAyah} - ${item.toAyah}</td>
+                <td>${this.getStatusBadge(item.status)}</td>
+                <td>${item.lastReviewed ? new Date(item.lastReviewed).toLocaleDateString('ar-SA') : 'لم يراجع بعد'}</td>
+                <td>${item.reviewCount || 0}</td>
+                <td>${this.getNextReviewDate(item)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="QuranReview.markAsReviewed(${item.id})" title="تسجيل المراجعة">
+                        ✓ مراجعة
                     </button>
-                    <button class="btn btn-sm btn-secondary" onclick="QuranReview.playSurahAudio(${item.surahId})">
-                        📖 استماع للسورة
+                    <button class="btn btn-sm btn-success" onclick="QuranReview.playSurahAudio(${item.surahId})" title="استماع للسورة">
+                        🎵 استماع
                     </button>
-                    <button class="btn btn-sm btn-primary" onclick="QuranReview.markAsReviewed(${item.id})">
-                        ✓ تم المراجعة
+                    <button class="btn btn-sm btn-secondary" onclick="QuranReview.openTarteel(${item.surahId}, ${item.fromAyah}, ${item.toAyah})" title="فتح في تطبيق ترتيل">
+                        🎧 ترتيل
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="QuranReview.deleteItem(${item.id})">
-                        🗑️ حذف
+                    <button class="btn btn-sm btn-danger" onclick="QuranReview.deleteItem(${item.id})" title="حذف العنصر">
+                        حذف
                     </button>
-                </div>
-            </td>
-        </tr>
-    `;
-},
+                </td>
+            </tr>
+        `;
+    },
     
+        
+        
     getStatusBadge(status) {
         const badges = {
             mastered: '<span class="status-badge status-mastered">✓ متقن</span>',
@@ -1263,8 +1193,247 @@ const QuranReview = {
     },
     
     // ===================================
-    // AUDIO PLAYER FUNCTIONS
+    // WARD PLAYER FUNCTIONS
     // ===================================
+    
+    initWardPlayer() {
+        const playWardBtn = document.getElementById('play-ward-btn');
+        const playSurahBtn = document.getElementById('play-surah-btn');
+        const stopWardBtn = document.getElementById('stop-ward-btn');
+        
+        if (playWardBtn) {
+            playWardBtn.addEventListener('click', () => {
+                this.playWard();
+            });
+        }
+        
+        if (playSurahBtn) {
+            playSurahBtn.addEventListener('click', () => {
+                this.playFullSurah();
+            });
+        }
+        
+        if (stopWardBtn) {
+            stopWardBtn.addEventListener('click', () => {
+                this.stopWardPlayback();
+            });
+        }
+        
+        // Initialize ward state
+        this.state.wardPlayer = {
+            isPlaying: false,
+            currentAyah: 0,
+            totalAyahs: 0,
+            mode: 'ward', // 'ward' or 'surah'
+            surahId: null,
+            fromAyah: null,
+            toAyah: null
+        };
+        
+        console.log('🎧 Ward player initialized');
+    },
+    
+    showWardPlayer() {
+        const wardPlayer = document.getElementById('ward-player');
+        if (wardPlayer) {
+            wardPlayer.style.display = 'block';
+        }
+    },
+    
+    hideWardPlayer() {
+        const wardPlayer = document.getElementById('ward-player');
+        if (wardPlayer) {
+            wardPlayer.style.display = 'none';
+        }
+    },
+    
+    playWard() {
+        const surahSelect = document.getElementById('surah-select');
+        const fromAyahInput = document.getElementById('from-ayah');
+        const toAyahInput = document.getElementById('to-ayah');
+        
+        if (!surahSelect || !fromAyahInput || !toAyahInput) return;
+        
+        const surahId = parseInt(surahSelect.value);
+        const fromAyah = parseInt(fromAyahInput.value);
+        const toAyah = parseInt(toAyahInput.value);
+        
+        if (!surahId || !fromAyah || !toAyah) {
+            this.showNotification('يرجى اختيار السورة والآيات', 'warning');
+            return;
+        }
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Setup ward player state
+        this.state.wardPlayer = {
+            isPlaying: true,
+            currentAyah: fromAyah,
+            totalAyahs: toAyah - fromAyah + 1,
+            mode: 'ward',
+            surahId: surahId,
+            fromAyah: fromAyah,
+            toAyah: toAyah
+        };
+        
+        // Show and update ward player
+        this.showWardPlayer();
+        this.updateWardDisplay();
+        this.playCurrentWardAyah();
+        
+        this.showNotification(`جاري تشغيل ورد ${surah.name} (${fromAyah}-${toAyah})`, 'success');
+    },
+    
+    playFullSurah() {
+        const surahSelect = document.getElementById('surah-select');
+        
+        if (!surahSelect) return;
+        
+        const surahId = parseInt(surahSelect.value);
+        if (!surahId) {
+            this.showNotification('يرجى اختيار السورة', 'warning');
+            return;
+        }
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Setup ward player state for full surah
+        this.state.wardPlayer = {
+            isPlaying: true,
+            currentAyah: 1,
+            totalAyahs: surah.ayahs,
+            mode: 'surah',
+            surahId: surahId,
+            fromAyah: 1,
+            toAyah: surah.ayahs
+        };
+        
+        // Show and update ward player
+        this.showWardPlayer();
+        this.updateWardDisplay();
+        this.playCurrentWardAyah();
+        
+        this.showNotification(`جاري تشغيل سورة ${surah.name} كاملة`, 'success');
+    },
+    
+    playCurrentWardAyah() {
+        if (!this.state.wardPlayer.isPlaying) return;
+        
+        const { surahId, currentAyah } = this.state.wardPlayer;
+        
+        if (!window.QuranAudio) return;
+        
+        // Get global ayah number
+        const globalAyahNumber = QuranAudio.surahAyahToGlobal(surahId, currentAyah);
+        const audioUrl = QuranAudio.getAyahAudioUrl(globalAyahNumber);
+        
+        // Create audio element for this ayah
+        const audio = new Audio(audioUrl);
+        
+        audio.onended = () => {
+            this.playNextWardAyah();
+        };
+        
+        audio.onerror = () => {
+            console.error('❌ Error playing ayah audio:', currentAyah);
+            this.playNextWardAyah();
+        };
+        
+        // Update display
+        this.updateWardAyahDisplay(surahId, currentAyah);
+        
+        // Play audio
+        audio.play().catch(error => {
+            console.error('❌ Error playing audio:', error);
+            this.playNextWardAyah();
+        });
+        
+        console.log(`🎵 Playing ayah ${currentAyah} of surah ${surahId}`);
+    },
+    
+    playNextWardAyah() {
+        const { currentAyah, toAyah } = this.state.wardPlayer;
+        
+        if (currentAyah < toAyah) {
+            this.state.wardPlayer.currentAyah++;
+            this.updateWardDisplay();
+            this.playCurrentWardAyah();
+        } else {
+            // Finished playing
+            this.stopWardPlayback();
+            this.showNotification('تم الانتهاء من تشغيل الورد', 'success');
+        }
+    },
+    
+    stopWardPlayback() {
+        this.state.wardPlayer.isPlaying = false;
+        
+        // Stop any playing audio
+        const allAudio = document.querySelectorAll('audio');
+        allAudio.forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+        });
+        
+        this.updateWardDisplay();
+        console.log('⏹️ Ward playback stopped');
+    },
+    
+    updateWardDisplay() {
+        const { currentAyah, totalAyahs, isPlaying } = this.state.wardPlayer;
+        
+        // Update progress
+        const progressText = document.getElementById('ward-progress-text');
+        const progressBar = document.getElementById('ward-progress-bar');
+        const currentAyahInfo = document.getElementById('current-ayah-info');
+        
+        if (progressText) {
+            progressText.textContent = `${currentAyah} / ${totalAyahs}`;
+        }
+        
+        if (progressBar) {
+            const progress = (currentAyah - this.state.wardPlayer.fromAyah + 1) / totalAyahs * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        if (currentAyahInfo) {
+            const surah = this.config.surahs.find(s => s.id === this.state.wardPlayer.surahId);
+            currentAyahInfo.textContent = `الآية الحالية: ${surah?.name || ''} - ${currentAyah}`;
+        }
+    },
+    
+    updateWardAyahDisplay(surahId, ayahNumber) {
+        const wardImage = document.getElementById('ward-image');
+        const wardText = document.getElementById('ward-ayah-text');
+        
+        if (!window.QuranAudio) return;
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Update image
+        if (wardImage) {
+            const highRes = this.state.imageQuality === 'high';
+            const imageUrl = QuranAudio.getAyahImageUrl(surahId, ayahNumber, highRes);
+            
+            wardImage.src = imageUrl;
+            wardImage.style.display = 'block';
+            wardImage.onerror = () => {
+                wardImage.style.display = 'none';
+                if (wardText) {
+                    wardText.style.display = 'block';
+                }
+            };
+        }
+        
+        // Update text
+        if (wardText) {
+            wardText.textContent = `${surah.name} - الآية ${ayahNumber}`;
+            wardText.style.display = wardImage && wardImage.style.display !== 'none' ? 'none' : 'block';
+        }
+    },
     
     initAudioPlayer() {
         const audioElement = document.getElementById('audio-element');
@@ -1353,263 +1522,6 @@ const QuranReview = {
         }
     },
     
-    // ===================================
-    // SEQUENTIAL AUDIO PLAYBACK
-    // ===================================
-    
-    playAyahRange(surahId, fromAyah, toAyah) {
-        console.log('🎵 Starting sequential ayah playback (الورد)');
-        console.log('📊 Playback parameters:', {
-            surahId: surahId,
-            fromAyah: fromAyah,
-            toAyah: toAyah,
-            totalAyahs: toAyah - fromAyah + 1
-        });
-        
-        try {
-            if (!window.QuranAudio) {
-                console.error('❌ QuranAudio not loaded');
-                this.showNotification('Configuration audio non chargée', 'error');
-                return;
-            }
-            
-            const surah = this.config.surahs.find(s => s.id === surahId);
-            if (!surah) {
-                console.error('❌ Surah not found:', surahId);
-                this.showNotification('السورة غير موجودة', 'error');
-                return;
-            }
-            
-            console.log('📖 Surah found:', surah.name);
-            
-            // Validate ayah range
-            if (fromAyah < 1 || toAyah > surah.ayahs || fromAyah > toAyah) {
-                console.error('❌ Invalid ayah range:', { fromAyah, toAyah, maxAyahs: surah.ayahs });
-                this.showNotification('نطاق الآيات غير صحيح', 'error');
-                return;
-            }
-            
-            // Stop any current playback
-            if (this.audioState.isPlaying) {
-                console.log('⏹️ Stopping current playback before starting new one');
-                this.stopSequentialAudio();
-            }
-            
-            // Get ayah range URLs
-            console.log('🔗 Getting ayah range URLs...');
-            const ayahUrls = QuranAudio.getAyahRangeAudioUrls(surahId, fromAyah, toAyah);
-            console.log('📝 Generated URLs:', ayahUrls.length, 'URLs');
-            
-            if (ayahUrls.length === 0) {
-                console.error('❌ No audio URLs generated');
-                this.showNotification('لا توجد آيات صوتية', 'error');
-                return;
-            }
-            
-            // Setup audio state
-            this.audioState = {
-                isPlaying: true,
-                currentMode: 'ayah-range',
-                currentSurah: surahId,
-                currentAyah: fromAyah,
-                toAyah: toAyah,
-                audioQueue: ayahUrls,
-                currentAudioIndex: 0
-            };
-            
-            console.log('🎧 Audio state configured:', this.audioState);
-            
-            // Show enhanced notification
-            const totalAyahs = toAyah - fromAyah + 1;
-            this.showNotification(`🎵 بدء الورد: ${surah.name} (${totalAyahs} آيات من ${fromAyah} إلى ${toAyah})`, 'success');
-            
-            // Start playing first ayah
-            console.log('▶️ Starting sequential playback...');
-            this.playNextAyahInQueue();
-            
-            console.log('✅ Sequential playback (الورد) started successfully');
-            
-        } catch (error) {
-            console.error('❌ Error playing ayah range:', error);
-            this.showNotification('خطأ في تشغيل الآيات', 'error');
-        }
-    },
-    
-    playNextAyahInQueue() {
-        if (this.audioState.currentAudioIndex >= this.audioState.audioQueue.length) {
-            console.log('🏁 Sequential playback completed');
-            this.stopSequentialAudio();
-            this.showNotification('🎉 انتهى الورد بنجاح', 'success');
-            return;
-        }
-        
-        const audioElement = document.getElementById('audio-element');
-        const audioSource = document.getElementById('audio-source');
-        const surahNameElement = document.getElementById('audio-surah-name');
-        const reciterElement = document.getElementById('audio-reciter');
-        
-        if (!audioElement || !audioSource) {
-            console.error('❌ Audio elements not found');
-            this.showNotification('مشغل الصوت غير متاح', 'error');
-            return;
-        }
-        
-        const currentUrl = this.audioState.audioQueue[this.audioState.currentAudioIndex];
-        const currentAyah = this.audioState.currentAyah + this.audioState.currentAudioIndex;
-        const surah = this.config.surahs.find(s => s.id === this.audioState.currentSurah);
-        
-        console.log(`🎵 Playing ayah ${currentAyah} of ${surah.name} (${this.audioState.currentAudioIndex + 1}/${this.audioState.audioQueue.length})`);
-        
-        // Set audio source
-        audioSource.src = currentUrl;
-        
-        // Update UI with progress
-        if (surahNameElement) {
-            const progress = `${this.audioState.currentAudioIndex + 1}/${this.audioState.audioQueue.length}`;
-            surahNameElement.textContent = `${surah.name} - الآية ${currentAyah} (${progress})`;
-        }
-        
-        if (reciterElement) {
-            reciterElement.textContent = `القارئ: ${QuranAudio.getReciterName()}`;
-        }
-        
-        // Display synchronized ayah image
-        this.displayAyahImageForSequential(this.audioState.currentSurah, currentAyah);
-        
-        // Setup ended event for next ayah
-        audioElement.onended = () => {
-            console.log(`✅ Ayah ${currentAyah} completed`);
-            this.audioState.currentAudioIndex++;
-            this.playNextAyahInQueue();
-        };
-        
-        // Load and play
-        audioElement.load();
-        audioElement.play()
-            .then(() => {
-                console.log(`🎵 Successfully playing ayah ${currentAyah} of ${surah.name}`);
-                console.log(`🖼️ Displaying image for ayah ${currentAyah}`);
-                
-                // Show progress notification for longer surahs
-                if (this.audioState.audioQueue.length > 5) {
-                    const progress = Math.round(((this.audioState.currentAudioIndex + 1) / this.audioState.audioQueue.length) * 100);
-                    console.log(`📊 Progress: ${progress}%`);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error playing ayah:', error);
-                // Continue to next ayah even if current fails
-                this.audioState.currentAudioIndex++;
-                this.playNextAyahInQueue();
-            });
-    },
-    
-    displayAyahImageForSequential(surahId, ayahNumber) {
-        // Create or update image display area
-        let imageContainer = document.getElementById('sequential-ayah-image');
-        if (!imageContainer) {
-            imageContainer = document.createElement('div');
-            imageContainer.id = 'sequential-ayah-image';
-            imageContainer.style.cssText = `
-                text-align: center;
-                margin: 1rem 0;
-                padding: 1rem;
-                background: white;
-                border-radius: 8px;
-                border: 1px solid #dee2e6;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-            `;
-            
-            // Insert after audio player
-            const audioPlayer = document.getElementById('audio-element');
-            if (audioPlayer && audioPlayer.parentNode) {
-                audioPlayer.parentNode.insertBefore(imageContainer, audioPlayer.nextSibling);
-            }
-        }
-        
-        const surah = this.config.surahs.find(s => s.id === surahId);
-        if (!surah) return;
-        
-        // Clear container first
-        imageContainer.innerHTML = '';
-        
-        // Create image element
-        const img = document.createElement('img');
-        img.style.cssText = `
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 0.5rem;
-        `;
-        
-        // Get image URL with quality setting
-        const highRes = this.state.imageQuality === 'high';
-        const imageUrl = window.QuranAudio ? 
-            QuranAudio.getAyahImageUrl(surahId, ayahNumber, highRes) : 
-            '';
-        
-        img.src = imageUrl;
-        img.alt = `${surah.name} - الآية ${ayahNumber}`;
-        
-        // Handle image load/error
-        img.onload = () => {
-            console.log(`🖼️ Image loaded for ayah ${ayahNumber}`);
-        };
-        
-        img.onerror = () => {
-            console.error(`❌ Failed to load image for ayah ${ayahNumber}`);
-            // Show text fallback
-            const textDiv = document.createElement('div');
-            textDiv.className = 'arabic-text';
-            textDiv.style.cssText = `
-                font-size: 1.5rem;
-                color: #212529;
-                padding: 1rem;
-                background: #f8f9fa;
-                border-radius: 8px;
-                border: 1px solid #dee2e6;
-            `;
-            textDiv.textContent = `${surah.name} - الآية ${ayahNumber}`;
-            imageContainer.innerHTML = '';
-            imageContainer.appendChild(textDiv);
-        };
-        
-        // Add image to container
-        imageContainer.appendChild(img);
-        
-        // Add ayah info
-        const infoDiv = document.createElement('div');
-        infoDiv.style.cssText = `
-            font-weight: bold;
-            color: #212529;
-            margin-top: 0.5rem;
-        `;
-        infoDiv.textContent = `${surah.name} - الآية ${ayahNumber}`;
-        imageContainer.appendChild(infoDiv);
-    },
-    
-    stopSequentialAudio() {
-        const audioElement = document.getElementById('audio-element');
-        if (audioElement) {
-            audioElement.pause();
-            audioElement.onended = null;
-        }
-        
-        // Remove sequential image container
-        const imageContainer = document.getElementById('sequential-ayah-image');
-        if (imageContainer) {
-            imageContainer.remove();
-        }
-        
-        this.audioState.isPlaying = false;
-        this.audioState.currentMode = 'single';
-        this.audioState.audioQueue = [];
-        this.audioState.currentAudioIndex = 0;
-        
-        console.log('⏹️ Sequential audio stopped and images cleaned up');
-    },
-    
     updateReciter() {
         const reciterSelector = document.getElementById('reciter-selector');
         
@@ -1647,70 +1559,35 @@ const QuranReview = {
     },
     
     updateAyahLimits() {
-        console.log('📊 Updating ayah limits...');
         const surahSelect = document.getElementById('surah-select');
         const fromAyahInput = document.getElementById('from-ayah');
         const toAyahInput = document.getElementById('to-ayah');
         
-        if (!surahSelect || !fromAyahInput || !toAyahInput) {
-            console.error('❌ Form elements not found');
-            return;
-        }
+        if (!surahSelect || !fromAyahInput || !toAyahInput) return;
         
         const surahId = parseInt(surahSelect.value);
-        if (!surahId) {
-            console.log('📭 No surah selected, clearing limits');
-            fromAyahInput.max = '';
-            toAyahInput.max = '';
-            fromAyahInput.placeholder = 'اختر السورة أولاً';
-            toAyahInput.placeholder = 'اختر السورة أولاً';
-            return;
-        }
+        if (!surahId) return;
         
         const surah = this.config.surahs.find(s => s.id === surahId);
-        if (!surah) {
-            console.error('❌ Surah not found:', surahId);
-            return;
-        }
-        
-        console.log(`📖 Found surah: ${surah.name} with ${surah.ayahs} ayahs`);
+        if (!surah) return;
         
         // Update max values
         fromAyahInput.max = surah.ayahs;
         toAyahInput.max = surah.ayahs;
         
-        // Update placeholder with Arabic text
-        const placeholderText = `من 1 إلى ${surah.ayahs}`;
-        fromAyahInput.placeholder = placeholderText;
-        toAyahInput.placeholder = placeholderText;
+        // Update placeholder
+        fromAyahInput.placeholder = `من 1 إلى ${surah.ayahs}`;
+        toAyahInput.placeholder = `من 1 إلى ${surah.ayahs}`;
         
         // Clear current values if they exceed the limit
-        const fromValue = parseInt(fromAyahInput.value);
-        const toValue = parseInt(toAyahInput.value);
-        
-        if (fromValue > surah.ayahs) {
-            console.log(`🔄 Clearing from-ayah value ${fromValue} > ${surah.ayahs}`);
+        if (parseInt(fromAyahInput.value) > surah.ayahs) {
             fromAyahInput.value = '';
         }
-        
-        if (toValue > surah.ayahs) {
-            console.log(`🔄 Clearing to-ayah value ${toValue} > ${surah.ayahs}`);
+        if (parseInt(toAyahInput.value) > surah.ayahs) {
             toAyahInput.value = '';
         }
         
-        // Auto-set toAyah if fromAyah is valid and toAyah is empty
-        if (fromValue && fromValue <= surah.ayahs && !toValue) {
-            const suggestedTo = Math.min(fromValue + 7, surah.ayahs); // Suggest 7 ayahs or max
-            toAyahInput.value = suggestedTo;
-            console.log(`💡 Suggested to-ayah: ${suggestedTo} (from ${fromValue})`);
-        }
-        
-        // Add visual feedback
-        fromAyahInput.style.borderColor = fromValue && fromValue <= surah.ayahs ? '#28a745' : '#dee2e6';
-        toAyahInput.style.borderColor = toValue && toValue <= surah.ayahs ? '#28a745' : '#dee2e6';
-        
-        console.log(`✅ Updated ayah limits for Surah ${surahId} (${surah.name}): 1-${surah.ayahs}`);
-        console.log(`📊 Current values: from=${fromValue || 'empty'}, to=${toValue || 'empty'}`);
+        console.log(`📊 Updated ayah limits for Surah ${surahId}: 1-${surah.ayahs}`);
     },
     
     populateSurahSelect() {
@@ -1843,16 +1720,7 @@ document.head.appendChild(style);
 // Global error handling
 window.addEventListener('error', (e) => {
     console.error('❌ Application Error:', e.error);
-    // Only show notification for critical errors, not for minor ones
-    if (e.error && e.error.message && !e.error.message.includes('NetworkError')) {
-        QuranReview.showNotification('حدث خطأ في التطبيق', 'error');
-    }
-});
-
-// Handle unhandled promise rejections
-window.addEventListener('unhandledrejection', (e) => {
-    console.error('❌ Unhandled Promise Rejection:', e.reason);
-    // Don't show notification for promise rejections to avoid spam
+    QuranReview.showNotification('حدث خطأ في التطبيق', 'error');
 });
 
 // Make QuranReview available globally
