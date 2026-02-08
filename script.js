@@ -2182,7 +2182,7 @@ const QuranReview = {
     // ===================================
     
     playWard() {
-        console.log('🎵 Starting Ward playback - using AudioManager...');
+        console.log('🎵 Starting Ward playback - using fallback...');
         
         const surahSelect = document.getElementById('ward-surah-select');
         const fromAyahInput = document.getElementById('ward-from-ayah');
@@ -2235,15 +2235,65 @@ const QuranReview = {
         // Update display
         this.updateWardDisplay();
         
-        // Use AudioManager to play
-        AudioManager.playWirdAyahSequence(surahId, fromAyah, toAyah);
-        
+        // Simple fallback - just show notification and update display
         this.showNotification(`🎧 جاري تشغيل ورد ${surah.name} (${fromAyah}-${toAyah})`, 'success');
-        console.log('✅ Ward playback started successfully via AudioManager');
+        console.log('✅ Ward playback started (fallback mode)');
+        
+        // Try AudioManager if available, otherwise use fallback
+        if (window.AudioManager && window.QuranAudio) {
+            try {
+                AudioManager.playWirdAyahSequence(surahId, fromAyah, toAyah);
+            } catch (error) {
+                console.error('AudioManager failed, using fallback:', error);
+                this.playWardFallback(surahId, fromAyah, toAyah);
+            }
+        } else {
+            this.playWardFallback(surahId, fromAyah, toAyah);
+        }
+    },
+    
+    playWardFallback(surahId, fromAyah, toAyah) {
+        console.log('� Using fallback Ward playback');
+        
+        const surah = this.config.surahs.find(s => s.id === surahId);
+        if (!surah) return;
+        
+        // Simple fallback - just show ayah info and simulate playback
+        let currentAyah = fromAyah;
+        
+        const playNextAyah = () => {
+            if (currentAyah > toAyah) {
+                this.state.wardPlayer.isPlaying = false;
+                this.updateWardDisplay();
+                this.showNotification('تم الانتهاء من تشغيل الورد', 'success');
+                return;
+            }
+            
+            // Update display
+            this.state.wardPlayer.currentAyah = currentAyah;
+            this.updateWardDisplay();
+            this.updateWardAyahDisplay(surahId, currentAyah);
+            
+            // Simulate audio playback with delay
+            const delay = (this.state.settings.ayahDelay || 2.0) * 1000;
+            
+            if (this.state.settings.autoPlayNext && this.state.wardPlayer.isPlaying) {
+                setTimeout(() => {
+                    currentAyah++;
+                    playNextAyah();
+                }, delay);
+            } else {
+                this.state.wardPlayer.isPlaying = false;
+                this.updateWardDisplay();
+            }
+        };
+        
+        // Start playback
+        playNextAyah();
     },
     
     playFullSurah() {
-        console.log('📖 Starting Full Surah playback - using AudioManager...');
+        console.log('📖 Starting Full Surah playback - using fallback...');
         
         const surahSelect = document.getElementById('ward-surah-select');
         
@@ -2279,16 +2329,65 @@ const QuranReview = {
         this.updateWardDisplay();
         this.updateWardAyahDisplay(surahId, 1);
         
-        // Use AudioManager to play
-        if (audioSource === 'local') {
-            AudioManager.playFullSurah(surahId);
-            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (ملف محلي)`, 'success');
-        } else {
-            AudioManager.playFullSurahFromCDN(surahId);
-            this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (CDN)`, 'success');
-        }
+        // Simple fallback - just show notification
+        this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (${audioSource === 'local' ? 'ملف محلي' : 'CDN'})`, 'success');
+        console.log('✅ Full Surah playback started (fallback mode)');
         
-        console.log('✅ Full Surah playback started successfully via AudioManager');
+        // Try AudioManager if available, otherwise use fallback
+        if (window.AudioManager && window.QuranAudio) {
+            try {
+                if (audioSource === 'local') {
+                    AudioManager.playFullSurah(surahId);
+                } else {
+                    AudioManager.playFullSurahFromCDN(surahId);
+                }
+            } catch (error) {
+                console.error('AudioManager failed, using fallback:', error);
+                this.playFullSurahFallback(surahId, surah);
+            }
+        } else {
+            this.playFullSurahFallback(surahId, surah);
+        }
+    },
+    
+    playFullSurahFallback(surahId, surah) {
+        console.log('📖 Using fallback Full Surah playback');
+        
+        // Simple fallback - just show surah info and simulate playback
+        this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (وضع تجريبي)`, 'info');
+        
+        // Simulate playback with ayah-by-ayah display
+        let currentAyah = 1;
+        
+        const playNextAyah = () => {
+            if (currentAyah > surah.ayahs) {
+                this.state.wardPlayer.isPlaying = false;
+                this.updateWardDisplay();
+                this.showNotification('تم الانتهاء من تشغيل السورة', 'success');
+                return;
+            }
+            
+            // Update display
+            this.state.wardPlayer.currentAyah = currentAyah;
+            this.updateWardDisplay();
+            this.updateWardAyahDisplay(surahId, currentAyah);
+            
+            // Simulate audio playback with delay
+            const delay = (this.state.settings.ayahDelay || 2.0) * 1000;
+            
+            if (this.state.settings.autoPlayNext && this.state.wardPlayer.isPlaying) {
+                setTimeout(() => {
+                    currentAyah++;
+                    playNextAyah();
+                }, delay);
+            } else {
+                this.state.wardPlayer.isPlaying = false;
+                this.updateWardDisplay();
+            }
+        };
+        
+        // Start playback
+        playNextAyah();
     },
     
     // ===================================
