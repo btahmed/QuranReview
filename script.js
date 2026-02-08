@@ -1416,9 +1416,10 @@ const QuranReview = {
                 text-align: center;
                 margin: 1rem 0;
                 padding: 1rem;
-                background: var(--primary-light);
-                border-radius: var(--radius-lg);
-                border: 1px solid var(--border-color);
+                background: white;
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12);
             `;
             
             // Insert after audio player
@@ -1431,13 +1432,16 @@ const QuranReview = {
         const surah = this.config.surahs.find(s => s.id === surahId);
         if (!surah) return;
         
+        // Clear container first
+        imageContainer.innerHTML = '';
+        
         // Create image element
         const img = document.createElement('img');
         img.style.cssText = `
             max-width: 100%;
             height: auto;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-md);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 0.5rem;
         `;
         
@@ -1462,26 +1466,25 @@ const QuranReview = {
             textDiv.className = 'arabic-text';
             textDiv.style.cssText = `
                 font-size: 1.5rem;
-                color: var(--text-primary);
+                color: #212529;
                 padding: 1rem;
-                background: var(--bg-secondary);
-                border-radius: var(--radius-md);
-                border: 1px solid var(--border-color);
+                background: #f8f9fa;
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
             `;
             textDiv.textContent = `${surah.name} - الآية ${ayahNumber}`;
             imageContainer.innerHTML = '';
             imageContainer.appendChild(textDiv);
         };
         
-        // Update container content
-        imageContainer.innerHTML = '';
+        // Add image to container
         imageContainer.appendChild(img);
         
         // Add ayah info
         const infoDiv = document.createElement('div');
         infoDiv.style.cssText = `
             font-weight: bold;
-            color: var(--text-primary);
+            color: #212529;
             margin-top: 0.5rem;
         `;
         infoDiv.textContent = `${surah.name} - الآية ${ayahNumber}`;
