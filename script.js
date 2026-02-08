@@ -135,16 +135,32 @@ const AudioManager = {
 
             this.currentAudio.onended = () => {
                 console.log(` Ayah ${ayahNumber} finished`);
+                console.log(`🔍 DEBUG: autoPlayNext = ${QuranReview.state.settings.autoPlayNext}`);
+                console.log(`🔍 DEBUG: mode = ${this.mode}`);
+                console.log(`🔍 DEBUG: i = ${i}, urls.length = ${urls.length}`);
+                console.log(`🔍 DEBUG: fromAyah = ${fromAyah}, toAyah = ${toAyah}`);
+
+                // Check if this is the last ayah
+                const isLastAyah = ayahNumber >= toAyah;
+                console.log(`🔍 DEBUG: isLastAyah = ${isLastAyah}`);
+
+                if (isLastAyah) {
+                    console.log('✅ Last ayah completed - stopping sequence');
+                    this.stopAll();
+                    return;
+                }
 
                 // Add delay before next ayah if configured
                 const delay = (QuranReview.state.settings.ayahDelay || 2.0) * 1000;
 
                 if (QuranReview.state.settings.autoPlayNext && (this.mode === "wird" || this.mode === "surah")) {
+                    console.log(`🔄 Auto-playing next ayah after ${delay}ms delay`);
                     const timer = setTimeout(() => {
                         playNext();
                     }, delay);
                     this.timers.add(timer);
                 } else {
+                    console.log('⏸️ Auto-play disabled or mode changed - stopping sequence');
                     // Stop if auto-play is disabled
                     this.stopAll();
                 }
