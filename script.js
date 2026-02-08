@@ -1212,6 +1212,7 @@ const QuranReview = {
             const audioElement = document.getElementById('audio-element');
             const audioSource = document.getElementById('audio-source');
             const surahNameElement = document.getElementById('audio-surah-name');
+            const reciterElement = document.getElementById('audio-reciter');
             
             if (!window.QuranAudio) {
                 console.error('❌ QuranAudio not loaded');
@@ -1221,6 +1222,7 @@ const QuranReview = {
             
             const audioUrl = QuranAudio.getAudioUrl(surahNumber);
             const surahName = QuranAudio.getSurahName(surahNumber);
+            const reciterName = QuranAudio.getReciterName();
             
             // Debug: log the URL
             console.log('🎵 Generated URL:', audioUrl);
@@ -1236,12 +1238,37 @@ const QuranReview = {
                 return;
             }
             
-            // Direct fallback - open in new tab (bypass CORS)
-            window.open(audioUrl, '_blank', 'noopener,noreferrer');
-            this.showNotification(`تم فتح ${surahName} في نافذة جديدة`, 'info');
-            
-            if (surahNameElement) {
-                surahNameElement.textContent = surahName;
+            // Use internal HTML5 audio player
+            if (audioElement && audioSource) {
+                // Set the audio source
+                audioSource.src = audioUrl;
+                
+                // Update UI
+                if (surahNameElement) {
+                    surahNameElement.textContent = `سورة ${surahName}`;
+                }
+                
+                if (reciterElement) {
+                    reciterElement.textContent = `القارئ: ${reciterName}`;
+                }
+                
+                // Load and play
+                audioElement.load();
+                audioElement.play()
+                    .then(() => {
+                        this.showNotification(`جاري تشغيل ${surahName}`, 'success');
+                        console.log('🎵 Audio playing successfully');
+                    })
+                    .catch(error => {
+                        console.error('❌ Error playing audio:', error);
+                        // Fallback to opening in new tab if autoplay fails
+                        window.open(audioUrl, '_blank', 'noopener,noreferrer');
+                        this.showNotification(`تم فتح ${surahName} في نافذة جديدة`, 'info');
+                    });
+            } else {
+                // Fallback if audio element not found
+                window.open(audioUrl, '_blank', 'noopener,noreferrer');
+                this.showNotification(`تم فتح ${surahName} في نافذة جديدة`, 'info');
             }
             
         } catch (error) {
