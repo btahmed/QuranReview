@@ -943,6 +943,16 @@ const QuranReview = {
             console.log('🎵 Generated URL:', audioUrl);
             console.log('🎵 Surah Number:', surahNumber);
             console.log('🎵 QuranAudio available:', !!window.QuranAudio);
+            console.log('🎵 Current reciter:', QuranAudio?.currentReciter);
+            console.log('🎵 Reciter in function:', reciter);
+            console.log('🎵 Audio config loaded:', !!window.QuranAudio);
+            
+            // Force reload audio config if needed
+            if (!window.QuranAudio || !QuranAudio.getAudioUrl) {
+                console.error('❌ QuranAudio not properly loaded');
+                this.showNotification('Configuration audio non chargée', 'error');
+                return;
+            }
             
             // Direct fallback - open in new tab (bypass CORS)
             window.open(audioUrl, '_blank', 'noopener,noreferrer');
