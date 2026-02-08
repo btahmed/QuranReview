@@ -386,6 +386,20 @@ const QuranReview = {
         console.log(' QuranReview App initialized successfully');
     },
     
+    updateTodayDate() {
+        const todayDateElement = document.getElementById('today-date');
+        if (todayDateElement) {
+            const today = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            todayDateElement.textContent = today.toLocaleDateString('ar-SA', options);
+        }
+    },
+    
     // ===================================
     // DATA MANAGEMENT
     // ===================================
