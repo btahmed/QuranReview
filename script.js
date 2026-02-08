@@ -151,8 +151,11 @@ const AudioManager = {
                 }
 
                 // Get REAL-TIME delay from settings (not cached)
-                const currentDelay = parseFloat(QuranReview.state.settings.ayahDelay) || 2.0;
+                const rawAyahDelay = QuranReview.state.settings.ayahDelay;
+                const currentDelay = parseFloat(rawAyahDelay) || 2.0;
                 const delay = currentDelay * 1000; // Convert to milliseconds
+                console.log(`🔍 DEBUG: rawAyahDelay = ${rawAyahDelay} (type: ${typeof rawAyahDelay})`);
+                console.log(`🔍 DEBUG: parseFloat(rawAyahDelay) = ${parseFloat(rawAyahDelay)}`);
                 console.log(`🔍 DEBUG: currentDelay = ${currentDelay}s, delay = ${delay}ms`);
 
                 if (QuranReview.state.settings.autoPlayNext && (this.mode === "wird" || this.mode === "surah")) {
