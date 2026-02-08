@@ -60,41 +60,51 @@ const AudioManager = {
     },
 
     playFullSurahAsWird(surahId, fromAyah, toAyah) {
-        this.stopAll();
-        this.mode = "wird";
+        // Don't stop everything - we want to keep the wird sequence
+        if (this.mode !== "wird") {
+            this.stopAll();
+            this.mode = "wird";
+        }
         
-        // Start background audio (local MP3)
+        // Start background audio (local MP3) without stopping wird sequence
         const src = `audio/${String(surahId).padStart(3, "0")}.mp3`;
         console.log(`🎵 AudioManager: Playing full surah ${surahId} background audio from ${src}`);
         
-        // Start background audio without affecting wird sequence
+        // Start background audio
         this.audio.src = src;
         this.audio.play().catch(error => {
             console.error('❌ Error playing background audio:', error);
         });
         
-        // Start wird sequence for images and navigation
-        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
+        // Start wird sequence for images and navigation (if not already running)
+        if (!this.currentAudio) {
+            this.playWirdAyahSequence(surahId, fromAyah, toAyah);
+        }
     },
     
     playFullSurahFromCDNAsWird(surahId, fromAyah, toAyah) {
-        this.stopAll();
-        this.mode = "wird";
+        // Don't stop everything - we want to keep the wird sequence
+        if (this.mode !== "wird") {
+            this.stopAll();
+            this.mode = "wird";
+        }
         
         if (!window.QuranAudio) return;
         
-        // Start background audio (CDN)
+        // Start background audio (CDN) without stopping wird sequence
         const audioUrl = window.QuranAudio.getAudioUrl(surahId);
         console.log(`🎵 AudioManager: Playing full surah ${surahId} background audio from CDN: ${audioUrl}`);
         
-        // Start background audio without affecting wird sequence
+        // Start background audio
         this.audio.src = audioUrl;
         this.audio.play().catch(error => {
             console.error('❌ Error playing background audio:', error);
         });
         
-        // Start wird sequence for images and navigation
-        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
+        // Start wird sequence for images and navigation (if not already running)
+        if (!this.currentAudio) {
+            this.playWirdAyahSequence(surahId, fromAyah, toAyah);
+        }
     },
 
     startImageSyncForSurah(surahId) {
