@@ -496,12 +496,12 @@ body {
 .ayah-text {
     font-size: 2rem;
     line-height: 2.5;
-    color: var(--text-primary);
+    color: #212529;
     text-align: right;
     padding: 2rem;
-    background: var(--bg-secondary);
+    background: #f8f9fa;
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #dee2e6;
 }
 
 .ayah-actions {
@@ -514,11 +514,11 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
-        padding: 0 var(--spacing-sm);
+        padding: 0 0.5rem;
     }
     
     .header {
-        padding: var(--spacing-lg) 0;
+        padding: 1.5rem 0;
     }
     
     .header h1 {
@@ -528,18 +528,18 @@ body {
     .header-content {
         flex-direction: column;
         text-align: center;
-        gap: var(--spacing-md);
+        gap: 1rem;
     }
     
     .nav {
         width: 100%;
         justify-content: center;
         flex-wrap: wrap;
-        gap: var(--spacing-xs);
+        gap: 0.25rem;
     }
     
     .nav-link {
-        padding: var(--spacing-xs) var(--spacing-sm);
+        padding: 0.25rem 0.5rem;
         font-size: 0.85rem;
         min-width: 70px;
         text-align: center;
@@ -548,33 +548,33 @@ body {
     
     .features-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-md);
+        gap: 1rem;
     }
     
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-sm);
+        gap: 0.5rem;
     }
     
     .card {
-        margin-bottom: var(--spacing-md);
-        padding: var(--spacing-md);
+        margin-bottom: 1rem;
+        padding: 1rem;
     }
     
     .card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-xs);
+        gap: 0.25rem;
     }
     
     .form-input,
     .form-select {
         font-size: 16px; /* Prevent zoom on iOS */
-        padding: var(--spacing-md);
+        padding: 1rem;
     }
     
     .btn {
-        padding: var(--spacing-md) var(--spacing-lg);
+        padding: 1rem 1.5rem;
         font-size: 0.9rem;
     }
     
@@ -586,7 +586,7 @@ body {
     
     #audio-info {
         font-size: 0.8rem;
-        margin-top: var(--spacing-sm);
+        margin-top: 0.5rem;
     }
     
     /* Table Mobile */
@@ -596,13 +596,13 @@ body {
     
     .memorization-table th,
     .memorization-table td {
-        padding: var(--spacing-sm);
+        padding: 0.5rem;
     }
     
     /* Reading Page Mobile */
     .reading-navigation {
         flex-direction: column;
-        gap: var(--spacing-sm);
+        gap: 0.5rem;
     }
     
     .reading-navigation .btn {
@@ -613,14 +613,14 @@ body {
     
     .ayah-text {
         font-size: 1.25rem;
-        padding: var(--spacing-md);
+        padding: 1rem;
         line-height: 2;
     }
     
     .ayah-actions {
         flex-direction: column;
         align-items: center;
-        gap: var(--spacing-sm);
+        gap: 0.5rem;
     }
     
     .ayah-actions .btn {
@@ -634,18 +634,18 @@ body {
     
     /* Settings Mobile */
     .settings-form {
-        gap: var(--spacing-md);
+        gap: 1rem;
     }
     
     .form-group {
-        margin-bottom: var(--spacing-md);
+        margin-bottom: 1rem;
     }
 }
 
 /* Extra Small Phones */
 @media (max-width: 480px) {
     .container {
-        padding: 0 var(--spacing-xs);
+        padding: 0 0.25rem;
     }
     
     .header h1 {
@@ -654,22 +654,22 @@ body {
     
     .nav-link {
         font-size: 0.75rem;
-        padding: var(--spacing-xs) var(--spacing-sm);
+        padding: 0.25rem 0.5rem;
         min-width: 60px;
     }
     
     .card {
-        padding: var(--spacing-sm);
-        margin-bottom: var(--spacing-sm);
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-xs);
+        gap: 0.25rem;
     }
     
     .stat-card {
-        padding: var(--spacing-md);
+        padding: 1rem;
     }
     
     .stat-number {
@@ -677,13 +677,13 @@ body {
     }
     
     .btn {
-        padding: var(--spacing-sm) var(--spacing-md);
+        padding: 0.5rem 1rem;
         font-size: 0.85rem;
     }
     
     .ayah-text {
         font-size: 1rem;
-        padding: var(--spacing-sm);
+        padding: 0.5rem;
     }
     
     .memorization-table {
@@ -692,7 +692,7 @@ body {
     
     .memorization-table th,
     .memorization-table td {
-        padding: var(--spacing-xs);
+        padding: 0.25rem;
     }
     
     /* Hide some columns on very small screens */
