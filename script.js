@@ -1462,8 +1462,24 @@ const QuranReview = {
             return;
         }
         
+        // VALIDATION: fromAyah must be <= toAyah
+        if (fromAyah > toAyah) {
+            this.showNotification('❌ خطأ: من الآية يجب أن يكون أصغر أو يساوي إلى الآية', 'error');
+            console.error(`❌ Invalid ayah range: from ${fromAyah} > to ${toAyah}`);
+            return;
+        }
+        
         const surah = this.config.surahs.find(s => s.id === surahId);
         if (!surah) return;
+        
+        // Additional validation: check against surah ayah count
+        if (fromAyah < 1 || toAyah > surah.ayahs) {
+            this.showNotification(`❌ خطأ: الآيات يجب أن تكون بين 1 و ${surah.ayahs}`, 'error');
+            console.error(`❌ Invalid ayah range: ${fromAyah}-${toAyah} for surah ${surahId} (max: ${surah.ayahs})`);
+            return;
+        }
+        
+        console.log(`✅ Valid ayah range: ${fromAyah}-${toAyah} for surah ${surah.name}`);
         
         // Setup ward player state
         this.state.wardPlayer = {
@@ -1572,28 +1588,45 @@ const QuranReview = {
     },
     
     stopWardPlayback() {
+        console.log('⏹️ STOPPING ALL PLAYBACK - Clearing everything...');
+        
         this.state.wardPlayer.isPlaying = false;
         
-        // Stop any playing audio - more comprehensive cleanup
+        // Stop ALL audio elements - more aggressive cleanup
         const allAudio = document.querySelectorAll('audio');
-        allAudio.forEach(audio => {
+        console.log(`🔍 Found ${allAudio.length} audio elements to stop`);
+        
+        allAudio.forEach((audio, index) => {
             if (!audio.paused) {
+                console.log(`⏹️ Stopping audio element ${index + 1}`);
                 audio.pause();
                 audio.currentTime = 0;
             }
+            // Clear all sources
+            audio.src = '';
+            audio.removeAttribute('src');
         });
         
-        // Clear any pending audio sources
+        // Clear any audio sources
         const audioSource = document.getElementById('audio-source');
         if (audioSource) {
             audioSource.src = '';
         }
         
+        // Force garbage collection of audio elements
+        if (window.QuranReview && window.QuranReview.currentAudio) {
+            if (window.QuranReview.currentAudio) {
+                window.QuranReview.currentAudio.pause();
+                window.QuranReview.currentAudio.src = '';
+                window.QuranReview.currentAudio = null;
+            }
+        }
+        
         // Reset display
         this.updateWardDisplay();
         
-        console.log('⏹️ Ward playback stopped - all audio cleared');
-        this.showNotification('تم إيقاف التشغيل', 'info');
+        console.log('✅ ALL PLAYBACK STOPPED - All audio cleared');
+        this.showNotification('⏹️ تم إيقاف التشغيل', 'info');
     },
     
     updateWardDisplay() {
