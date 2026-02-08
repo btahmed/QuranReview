@@ -1503,12 +1503,20 @@ const QuranReview = {
             left: 50%;
             transform: translateX(-50%);
             background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideDown 0.3s ease;
         `;
         
-        // Setup memorization functionality
-        this.setupMemorizationActions();
-        this.setupFilterButtons();
-        this.populateMemorizationTable();
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
     },
     
     setupFilterButtons() {
@@ -1524,44 +1532,13 @@ const QuranReview = {
                 
                 // Get filter type
                 const filterType = button.dataset.filter;
-            isPlaying: true,
-            currentAyah: 1,
-            totalAyahs: surah.ayahs,
-            mode: 'surah-local',
-            surahId: surahId,
-            fromAyah: 1,
-            toAyah: surah.ayahs
-        };
-        
-        // Create audio element for full surah
-        const audio = new Audio(audioUrl);
-        
-        audio.onended = () => {
-            console.log('✅ Full surah finished playing');
-            this.stopWardPlayback();
-            this.showNotification('تم الانتهاء من تشغيل السورة', 'success');
-        };
-        
-        audio.onerror = () => {
-            console.error('❌ Error playing local surah:', audioUrl);
-            this.showNotification('خطأ في تشغيل السورة المحلية', 'error');
-            // Fallback to CDN
-            this.playFullSurahAyahByAyah(surahId, surah);
-        };
-        
-        // Update display
-        this.updateWardDisplay();
-        this.updateWardAyahDisplay(surahId, 1);
-        
-        // Play audio
-        audio.play().catch(error => {
-            console.error('❌ Error playing local audio:', error);
-            this.showNotification('خطأ في تشغيل السورة المحلية', 'error');
-            // Fallback to CDN
-            this.playFullSurahAyahByAyah(surahId, surah);
+                
+                // Apply filter
+                this.filterMemorizationTable(filterType);
+                
+                console.log(`🔍 Filter applied: ${filterType}`);
+            });
         });
-        
-        this.showNotification(`📖 جاري تشغيل سورة ${surah.name} كاملة (ملف محلي)`, 'success');
     },
     
     playFullSurahAyahByAyah(surahId, surah) {
