@@ -1442,6 +1442,9 @@ const QuranReview = {
     },
     
     playWard() {
+        // Stop any current playback first
+        this.stopWardPlayback();
+        
         const surahSelect = document.getElementById('ward-surah-select');
         const fromAyahInput = document.getElementById('ward-from-ayah');
         const toAyahInput = document.getElementById('ward-to-ayah');
@@ -1479,6 +1482,9 @@ const QuranReview = {
     },
     
     playFullSurah() {
+        // Stop any current playback first
+        this.stopWardPlayback();
+        
         const surahSelect = document.getElementById('ward-surah-select');
         
         if (!surahSelect) return;
@@ -1562,15 +1568,26 @@ const QuranReview = {
     stopWardPlayback() {
         this.state.wardPlayer.isPlaying = false;
         
-        // Stop any playing audio
+        // Stop any playing audio - more comprehensive cleanup
         const allAudio = document.querySelectorAll('audio');
         allAudio.forEach(audio => {
-            audio.pause();
-            audio.currentTime = 0;
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
         });
         
+        // Clear any pending audio sources
+        const audioSource = document.getElementById('audio-source');
+        if (audioSource) {
+            audioSource.src = '';
+        }
+        
+        // Reset display
         this.updateWardDisplay();
-        console.log('⏹️ Ward playback stopped');
+        
+        console.log('⏹️ Ward playback stopped - all audio cleared');
+        this.showNotification('تم إيقاف التشغيل', 'info');
     },
     
     updateWardDisplay() {

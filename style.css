@@ -454,6 +454,28 @@ body {
     color: #721c24;
 }
 
+/* Ward Page Styles */
+.ward-selection {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+}
+
 /* Ward Player Styles */
 .ward-player {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
