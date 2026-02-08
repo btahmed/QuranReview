@@ -13,6 +13,7 @@ const AudioManager = {
     timers: new Set(),
     onEnded: null,
     currentAudio: null,  // For individual ayah audio elements
+    backgroundAudio: null, // For full surah background audio
 
     init() {
         this.audio = document.getElementById("audio-element");
@@ -48,6 +49,13 @@ const AudioManager = {
             this.currentAudio.currentTime = 0;
             this.currentAudio = null;
         }
+        
+        // Stop background audio if playing
+        if (this.backgroundAudio) {
+            this.backgroundAudio.pause();
+            this.backgroundAudio.currentTime = 0;
+            this.backgroundAudio = null;
+        }
 
         // Clear all timers
         for (const t of this.timers) clearTimeout(t);
@@ -60,51 +68,41 @@ const AudioManager = {
     },
 
     playFullSurahAsWird(surahId, fromAyah, toAyah) {
-        // Don't stop everything - we want to keep the wird sequence
-        if (this.mode !== "wird") {
-            this.stopAll();
-            this.mode = "wird";
-        }
-        
-        // Start background audio (local MP3) without stopping wird sequence
+        // Start background audio FIRST (without stopping anything)
         const src = `audio/${String(surahId).padStart(3, "0")}.mp3`;
-        console.log(`🎵 AudioManager: Playing full surah ${surahId} background audio from ${src}`);
+        console.log(`🎵 AudioManager: Starting background audio from ${src}`);
         
-        // Start background audio
-        this.audio.src = src;
-        this.audio.play().catch(error => {
+        // Create separate audio element for background
+        const backgroundAudio = new Audio(src);
+        backgroundAudio.play().catch(error => {
             console.error('❌ Error playing background audio:', error);
         });
         
-        // Start wird sequence for images and navigation (if not already running)
-        if (!this.currentAudio) {
-            this.playWirdAyahSequence(surahId, fromAyah, toAyah);
-        }
+        // Store background audio reference
+        this.backgroundAudio = backgroundAudio;
+        
+        // Then start wird sequence
+        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
     },
     
     playFullSurahFromCDNAsWird(surahId, fromAyah, toAyah) {
-        // Don't stop everything - we want to keep the wird sequence
-        if (this.mode !== "wird") {
-            this.stopAll();
-            this.mode = "wird";
-        }
-        
         if (!window.QuranAudio) return;
         
-        // Start background audio (CDN) without stopping wird sequence
+        // Start background audio FIRST (without stopping anything)
         const audioUrl = window.QuranAudio.getAudioUrl(surahId);
-        console.log(`🎵 AudioManager: Playing full surah ${surahId} background audio from CDN: ${audioUrl}`);
+        console.log(`🎵 AudioManager: Starting background audio from CDN: ${audioUrl}`);
         
-        // Start background audio
-        this.audio.src = audioUrl;
-        this.audio.play().catch(error => {
+        // Create separate audio element for background
+        const backgroundAudio = new Audio(audioUrl);
+        backgroundAudio.play().catch(error => {
             console.error('❌ Error playing background audio:', error);
         });
         
-        // Start wird sequence for images and navigation (if not already running)
-        if (!this.currentAudio) {
-            this.playWirdAyahSequence(surahId, fromAyah, toAyah);
-        }
+        // Store background audio reference
+        this.backgroundAudio = backgroundAudio;
+        
+        // Then start wird sequence
+        this.playWirdAyahSequence(surahId, fromAyah, toAyah);
     },
 
     startImageSyncForSurah(surahId) {
