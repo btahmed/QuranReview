@@ -422,11 +422,14 @@ const QuranReview = {
     
     loadData() {
         try {
-            // Load settings
-            const savedSettings = localStorage.getItem(this.config.themeKey);
+            // Load settings - CORRECT KEY
+            const savedSettings = localStorage.getItem(this.config.storageKey);
             this.state.settings = savedSettings ? 
                 JSON.parse(savedSettings) : 
                 { ...this.config.defaultSettings };
+            
+            console.log('🔍 DEBUG: Loaded settings:', this.state.settings);
+            console.log(`🔍 DEBUG: autoPlayNext = ${this.state.settings.autoPlayNext}`);
             
             // Load memorization data
             const savedData = localStorage.getItem(this.config.storageKey);
